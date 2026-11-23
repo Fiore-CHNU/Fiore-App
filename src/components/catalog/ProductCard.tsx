@@ -39,32 +39,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       onClick={() => onSelectProduct?.(product)}
       className="group flex flex-col cursor-pointer transition-all duration-300"
     >
-      {/* Product Image Container with rounded corners matching Figma */}
+      {/* Product Image Container with Lazy Loading (NFR-03.2) matching Figma */}
       <div className="relative w-full aspect-[4/5] rounded-2xl overflow-hidden bg-[#2D1227] shadow-lg border border-[#43193B]/60 transition-transform duration-300 group-hover:scale-[1.015] group-hover:border-[#F5B2E2]/40">
-        {/* Placeholder shimmer before load */}
-        {!imageLoaded && (
-          <div className="absolute inset-0 bg-[#2D1227] animate-pulse flex items-center justify-center text-[#F5B2E2]/30 text-xs">
-            Завантаження фото...
-          </div>
-        )}
-
-        {/* Lazy loaded image matching NFR-03.2 */}
-        {product.imageUrl ? (
-          <img
-            src={product.imageUrl}
-            alt={product.name}
-            loading="lazy"
-            decoding="async"
-            onLoad={() => setImageLoaded(true)}
-            className={`w-full h-full object-cover transition-all duration-500 group-hover:scale-105 ${
-              imageLoaded ? 'opacity-100' : 'opacity-0'
-            }`}
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-[#381631] text-[#FFD7F1]/50">
-            Без фото
-          </div>
-        )}
+        <LazyImage
+          src={product.imageUrl}
+          alt={product.name}
+          aspectRatio="aspect-[4/5]"
+          rootMargin="250px"
+        />
 
         {/* Stock status badge if unavailable (TC-3.1-2) */}
         {!product.isAvailable && (
