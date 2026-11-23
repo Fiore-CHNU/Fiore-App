@@ -5,6 +5,7 @@ import { CatalogPage } from './pages/CatalogPage';
 import type { CatalogProductItem } from './types/catalog';
 
 export function App() {
+  const [searchQuery, setSearchQuery] = useState('');
   const [cart, setCart] = useState<{ product: CatalogProductItem; quantity: number }[]>([]);
 
   const handleAddToCart = (product: CatalogProductItem) => {
@@ -26,10 +27,16 @@ export function App() {
       <Header
         cartItemCount={totalCartCount}
         onOpenCart={() => alert(`Кошик: ${totalCartCount} товарів`)}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
       />
 
       <div className="flex-1">
-        <CatalogPage onAddToCart={handleAddToCart} />
+        <CatalogPage
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          onAddToCart={handleAddToCart}
+        />
       </div>
 
       <Footer />
