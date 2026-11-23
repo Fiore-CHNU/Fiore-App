@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, SlidersHorizontal, X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { FilterSidebar } from '../components/catalog/FilterSidebar';
 import { CatalogGrid } from '../components/catalog/CatalogGrid';
+import { SortSelector } from '../components/catalog/SortSelector';
 import type { CatalogProductItem, FilterState, CatalogSort } from '../types/catalog';
 import { fetchCatalogProducts } from '../services/api';
 
@@ -22,7 +23,6 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [isSortOpen, setIsSortOpen] = useState(false);
 
   const [filters, setFilters] = useState<FilterState>({
     search: searchQuery,
@@ -76,7 +76,6 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
 
   const handleSortChange = (sort: CatalogSort) => {
     setFilters(prev => ({ ...prev, sort }));
-    setIsSortOpen(false);
   };
 
   const handleLoadMore = () => {
@@ -144,44 +143,12 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
           </button>
         </form>
 
-        {/* Sort By Dropdown matching Figma */}
-        <div className="relative self-end md:self-auto">
-          <button
-            onClick={() => setIsSortOpen(prev => !prev)}
-            className="flex items-center gap-2 text-white hover:text-[#F5B2E2] font-sans text-[14px] tracking-wide font-medium transition-colors"
-          >
-            <span>Sort By</span>
-            <SlidersHorizontal className="w-4 h-4" />
-          </button>
-
-          {isSortOpen && (
-            <div className="absolute right-0 mt-2 w-48 bg-[#3A1633] border border-[#522149] rounded-xl shadow-2xl py-2 z-20 text-[13px] animate-scale-in">
-              <button
-                onClick={() => handleSortChange('newest')}
-                className={`w-full text-left px-4 py-2 hover:bg-[#5C234E] transition-colors ${
-                  filters.sort === 'newest' ? 'text-[#F5B2E2] font-bold' : 'text-white'
-                }`}
-              >
-                Новинки (Newest)
-              </button>
-              <button
-                onClick={() => handleSortChange('priceAscending')}
-                className={`w-full text-left px-4 py-2 hover:bg-[#5C234E] transition-colors ${
-                  filters.sort === 'priceAscending' ? 'text-[#F5B2E2] font-bold' : 'text-white'
-                }`}
-              >
-                Ціна: від низької
-              </button>
-              <button
-                onClick={() => handleSortChange('priceDescending')}
-                className={`w-full text-left px-4 py-2 hover:bg-[#5C234E] transition-colors ${
-                  filters.sort === 'priceDescending' ? 'text-[#F5B2E2] font-bold' : 'text-white'
-                }`}
-              >
-                Ціна: від високої
-              </button>
-            </div>
-          )}
+        {/* Dedicated Sort Selector Component (US-1.5.2) */}
+        <div className="self-end md:self-auto">
+          <SortSelector
+            currentSort={filters.sort}
+            onSortChange={handleSortChange}
+          />
         </div>
       </div>
 
