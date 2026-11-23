@@ -4,6 +4,7 @@ import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
 import { CatalogPage } from './pages/CatalogPage';
 import { CartDrawer } from './components/cart/CartDrawer';
+import { ProductDetailsModal } from './components/product/ProductDetailsModal';
 import { AdminLoginPage } from './pages/admin/AdminLoginPage';
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
 import { ProtectedRoute } from './components/common/ProtectedRoute';
@@ -14,6 +15,7 @@ import type { CatalogProductItem } from './types/catalog';
 
 function ShopLayout() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedProduct, setSelectedProduct] = useState<CatalogProductItem | null>(null);
   const { addToCart } = useCart();
 
   const handleAddToCart = (product: CatalogProductItem) => {
@@ -25,6 +27,7 @@ function ShopLayout() {
       <Header
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
+        onSelectProduct={setSelectedProduct}
       />
 
       <div className="flex-1">
@@ -32,11 +35,21 @@ function ShopLayout() {
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           onAddToCart={handleAddToCart}
+          onSelectProduct={setSelectedProduct}
         />
       </div>
 
       <Footer />
       <CartDrawer />
+
+      {selectedProduct && (
+        <ProductDetailsModal
+          productId={selectedProduct.id}
+          onClose={() => setSelectedProduct(null)}
+          onSelectProduct={setSelectedProduct}
+          onAddToCart={handleAddToCart}
+        />
+      )}
     </div>
   );
 }
