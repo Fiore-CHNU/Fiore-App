@@ -1,6 +1,6 @@
 import type { CatalogProductItem, ListProductsResponse, ProductDetailsResponse, CatalogSort } from '../types/catalog';
 
-const API_BASE_URL = 'http://localhost:5090/api/v1';
+const API_BASE_URL = 'http://localhost:5162/api/v1';
 
 // Mock data matching the Figma mockups (Catalog-1.png & card.png)
 export const INITIAL_PRODUCTS: CatalogProductItem[] = [
@@ -129,18 +129,24 @@ export async function fetchCatalogProducts(params: {
   const page = params.page ?? 1;
   const pageSize = params.pageSize ?? 12;
 
+  const SORT_MAPPING: Record<CatalogSort, string> = {
+    newest: 'Newest',
+    priceAscending: 'PriceAscending',
+    priceDescending: 'PriceDescending',
+  };
+
   try {
     const query = new URLSearchParams();
-    query.set('page', page.toString());
-    query.set('pageSize', pageSize.toString());
-    if (params.search) query.set('search', params.search);
-    if (params.sort) query.set('sort', params.sort);
-    if (params.minPrice !== undefined) query.set('minPrice', params.minPrice.toString());
-    if (params.maxPrice !== undefined) query.set('maxPrice', params.maxPrice.toString());
-    if (params.inStockOnly) query.set('inStockOnly', 'true');
-    if (params.occasion) query.set('occasion', params.occasion);
-    if (params.flowerType) query.set('flowerType', params.flowerType);
-    if (params.color) query.set('color', params.color);
+    query.set('Page', page.toString());
+    query.set('PageSize', pageSize.toString());
+    if (params.search) query.set('Search', params.search);
+    if (params.sort) query.set('Sort', SORT_MAPPING[params.sort] || 'Newest');
+    if (params.minPrice !== undefined) query.set('MinPrice', params.minPrice.toString());
+    if (params.maxPrice !== undefined) query.set('MaxPrice', params.maxPrice.toString());
+    if (params.inStockOnly) query.set('InStockOnly', 'true');
+    if (params.occasion) query.set('Occasion', params.occasion);
+    if (params.flowerType) query.set('FlowerType', params.flowerType);
+    if (params.color) query.set('Color', params.color);
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 2000);
@@ -151,7 +157,10 @@ export async function fetchCatalogProducts(params: {
     clearTimeout(timeoutId);
 
     if (res.ok) {
-      return (await res.json()) as ListProductsResponse;
+      const data = (await res.json()) as ListProductsResponse;
+      if (data.items && data.items.length > 0) {
+        return data;
+      }
     }
   } catch {
     // Graceful fallback to client-side filtering matching backend behavior
