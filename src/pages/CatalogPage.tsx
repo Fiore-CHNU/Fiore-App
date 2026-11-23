@@ -1,16 +1,20 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, SlidersHorizontal } from 'lucide-react';
+import { Search, SlidersHorizontal, X } from 'lucide-react';
 import { FilterSidebar } from '../components/catalog/FilterSidebar';
 import { CatalogGrid } from '../components/catalog/CatalogGrid';
 import type { CatalogProductItem, FilterState, CatalogSort } from '../types/catalog';
 import { fetchCatalogProducts } from '../services/api';
 
 interface CatalogPageProps {
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
   onAddToCart: (product: CatalogProductItem) => void;
   onSelectProduct?: (product: CatalogProductItem) => void;
 }
 
 export const CatalogPage: React.FC<CatalogPageProps> = ({
+  searchQuery,
+  onSearchChange,
   onAddToCart,
   onSelectProduct,
 }) => {
@@ -21,7 +25,7 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
   const [isSortOpen, setIsSortOpen] = useState(false);
 
   const [filters, setFilters] = useState<FilterState>({
-    search: '',
+    search: searchQuery,
     sort: 'newest',
     minPrice: undefined,
     maxPrice: undefined,
@@ -30,6 +34,11 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
     flowerTypes: [],
     colors: [],
   });
+
+  // Sync internal search when top header search changes
+  useEffect(() => {
+    setFilters(prev => ({ ...prev, search: searchQuery }));
+  }, [searchQuery]);
 
   const loadData = useCallback(async (pageNum: number, isNewSearch = false) => {
     setIsLoading(true);
@@ -57,7 +66,7 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
   useEffect(() => {
     setPage(1);
     loadData(1, true);
-  }, [filters.sort, filters.minPrice, filters.maxPrice, loadData]);
+  }, [filters.sort, filters.minPrice, filters.maxPrice, filters.search, loadData]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,6 +88,7 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
   };
 
   const handleResetFilters = () => {
+    onSearchChange('');
     setFilters({
       search: '',
       sort: 'newest',
@@ -98,19 +108,37 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
         {/* Search Bar pill matching Figma */}
         <form
           onSubmit={handleSearchSubmit}
-          className="w-full md:max-w-xl flex items-center bg-[#FFD7F1] rounded-full overflow-hidden shadow-inner px-2 py-1"
+          className="w-full md:max-w-xl flex items-center bg-[#FFD7F1] rounded-full overflow-hidden shadow-inner px-2 py-1 transition-all focus-within:ring-2 focus-within:ring-[#F5B2E2]"
         >
           <input
             type="text"
             value={filters.search}
-            onChange={e => setFilters(prev => ({ ...prev, search: e.target.value }))}
+            onChange={e => {
+              const val = e.target.value;
+              setFilters(prev => ({ ...prev, search: val }));
+              onSearchChange(val);
+            }}
             placeholder="Пошук квітів, сортів, букетів..."
-            className="flex-1 bg-transparent px-4 py-1.5 text-[#1E0B1A] placeholder-[#1E0B1A]/50 focus:outline-none text-[14px] font-sans"
+            className="flex-1 bg-transparent px-4 py-1.5 text-[#1E0B1A] placeholder-[#1E0B1A]/50 focus:outline-none text-[14px] font-sans font-medium"
           />
+
+          {filters.search && (
+            <button
+              type="button"
+              onClick={() => {
+                setFilters(prev => ({ ...prev, search: '' }));
+                onSearchChange('');
+              }}
+              className="p-1 mr-1 text-[#1E0B1A]/60 hover:text-[#1E0B1A]"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+
           <button
             type="submit"
             aria-label="Пошук"
-            className="w-9 h-9 rounded-full bg-[#4E1E45] hover:bg-[#68355D] flex items-center justify-center text-white transition-colors"
+            className="w-9 h-9 rounded-full bg-[#4E1E45] hover:bg-[#68355D] flex items-center justify-center text-white transition-colors shrink-0"
           >
             <Search className="w-4 h-4" />
           </button>
@@ -156,6 +184,22 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
           )}
         </div>
       </div>
+
+      {/* Active Search Badge */}
+      {filters.search && (
+        <div className="mb-6 flex items-center gap-2 text-sm text-[#FFD7F1] bg-[#35142E] px-4 py-2 rounded-xl border border-[#4F1E44] w-fit">
+          <span>Результати за запитом: <strong>"{filters.search}"</strong></span>
+          <button
+            onClick={() => {
+              setFilters(prev => ({ ...prev, search: '' }));
+              onSearchChange('');
+            }}
+            className="ml-2 hover:text-white"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* Main Catalog Layout: Sidebar + Grid */}
       <div className="flex flex-col lg:flex-row gap-8 items-start">
