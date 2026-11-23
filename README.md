@@ -44,12 +44,12 @@ npm run lint
 
 | Epic / Тікет | User Story / Завдання | Гілка | Статус |
 |---|---|---|:---:|
-| **EAN-336** | **US-1.1.2** Frontend: Сітка карток каталогу, адаптивна верстка | `main` / `feature/EAN-336-catalog-grid` |  **Done** |
-| **EAN-341** | **US-1.4.2** Frontend: Рядок швидкого пошуку у шапці з підказками | `main` / `feature/EAN-341-search-bar` |  **Done** |
-| **EAN-346** | **US-1.5.2** Frontend: Перемикач сортування (за ціною та новизною) | `feature/EAN-346-sorting-switch` |  **PR Ready** |
-| **EAN-465** | **NFR-03.2** Frontend: Ліниве завантаження фото (IntersectionObserver) | `feature/EAN-465-lazy-loading` |  **PR Ready** |
-| **EAN-360 / EAN-361** | **Epic Кошик** / Додавання букета в кошик | — | 🟡 **In Progress** |
-| **EAN-363** | **US-3.1.2** Frontend: Кнопка «Додати в кошик», лічильник | `feature/EAN-363-add-to-cart-counter` |  **Done** |
+| **EAN-336** | **US-1.1.2** Frontend: Сітка карток каталогу, адаптивна верстка | `main` |  **Done** |
+| **EAN-341** | **US-1.4.2** Frontend: Рядок швидкого пошуку у шапці з підказками | `main` |  **Done** |
+| **EAN-346** | **US-1.5.2** Frontend: Перемикач сортування (за ціною та новизною) | `main` |  **Done** |
+| **EAN-465** | **NFR-03.2** Frontend: Ліниве завантаження фото (IntersectionObserver) | `main` |  **Done** |
+| **EAN-363** | **US-3.1.2** Frontend: Кнопка «Додати в кошик», лічильник | `main` |  **Done** |
+| **EAN-426 / EAN-428** | **US-7.1.2** Frontend: Сторінка входу до адмін-панелі, вихід, захист ролей | `feature/EAN-428-admin-login` |  **Done** |
 | **EAN-364** | **US-3.2.2** Frontend: Сторінка кошика, редагування кількості | `feature/EAN-364-cart-page` | ⏳ **Next / To Do** |
 | **US-4.1 – 4.5** | Frontend: Оформлення замовлення (Checkout, валідація, ліміт 500 грн) | — | ⏳ **Backlog** |
 | **US-5.1** | Frontend & Integration: Онлайн-оплата (LiqPay / WayForPay) | — | ⏳ **Backlog** |
