@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ShoppingBag, Check, Plus } from 'lucide-react';
 import type { CatalogProductItem } from '../../types/catalog';
 import { useCart } from '../../hooks/useCart';
+import { LazyImage } from '../common/LazyImage';
 
 interface ProductCardProps {
   product: CatalogProductItem;
@@ -15,7 +16,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   onSelectProduct,
 }) => {
   const [isAdded, setIsAdded] = useState(false);
-  const [imageLoaded, setImageLoaded] = useState(false);
   const { addToCart, getItemQuantity } = useCart();
 
   const itemQuantity = getItemQuantity(product.id);

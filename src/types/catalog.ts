@@ -56,6 +56,7 @@ export interface ProductDetailsResponse {
   images: ProductImage[];
   composition: ProductComposition[];
   facets: ProductFacet[];
+  packaging?: string | null;
 }
 
 export interface FilterState {
