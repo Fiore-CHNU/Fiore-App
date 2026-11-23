@@ -1,32 +1,112 @@
-# React + TypeScript + Vite
+# Fiore — Квіткова e-commerce платформа 🌸
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Клієнтська частина (Frontend) веб-застосунку для замовлення та доставки квітів **Fiore**.  
+Інтерфейс розроблено відповідно до дизайн-системи та макетів **Figma** (темна палітра бренду, шрифти Playfair Display та Rambla).
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🛠️ Технологічний стек
 
-## React Compiler
+- **Фреймворк**: [React 19](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/)
+- **Збирач**: [Vite](https://vite.dev/) (швидкий HMR та оптимізована production-збірка)
+- **Стилізація**: [Tailwind CSS v4](https://tailwindcss.com/) з користувацькими дизайн-токенами
+- **Іконки**: [Lucide React](https://lucide.dev/)
+- **Архітектура клієнта**: Компонентна модульна структура, типізований API-шар з підтримкою автономного режиму (Smart Fallback).
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the Oxlint configuration
+## 🎨 Дизайн-система (Figma Design Tokens)
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+Проєкт суворо наслідує кольорову гаму та типографіку з дизайн-макетів (`Scheme.png`, `Typography.png`, `UI kit.png`):
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
-```
+| Токен | Значення | Опис |
+|---|---|---|
+| `fiore-bg` | `#1E0B1A` | Основний глибокий сливовий фон сторінки |
+| `fiore-surface` | `#260E21` | Фон карток та контейнерів |
+| `fiore-pink` | `#F5B2E2` | Фірмовий рожевий акцент кнопок та бейджів |
+| `fiore-pink-light` | `#FFD7F1` | Світло-рожевий колір рядка пошуку та цін |
+| `fiore-plum` | `#4E1E45` | Темно-рожевий колір тексту кнопок та іконок |
+| `fiore-footer` | `#421838` | Колір фону підвалу сайту |
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+### Шрифти:
+- **Заголовки**: `Playfair Display` (елегантний серифний шрифт)
+- **Основний текст**: `Rambla` / `Montserrat` (чистий та легкий для читання гротеск)
+- **Логотип**: `Great Vibes` + векторний метелик Fiore
+
+---
+
+## 📋 Реалізований функціонал (Jira User Stories)
+
+| Тікет в Jira | Назва задачі | Гілка в Git | Статус |
+|---|---|---|:---:|
+| **EAN-336** | **US-1.1.2** Сітка карток каталогу, адаптивна верстка | `feature/EAN-336-catalog-grid` | ✅ Виконано |
+| **EAN-341** | **US-1.4.2** Рядок швидкого пошуку у верхній панелі | `feature/EAN-341-search-bar` | ✅ Виконано |
+| **EAN-346** | **US-1.5.2** Перемикач сортування за ціною та новизною | `feature/EAN-346-sorting-switch` | ✅ Виконано (PR #1) |
+| **EAN-465** | **NFR-03.2** Ліниве завантаження фото (Lazy Loading) | `feature/EAN-465-lazy-loading` | ✅ Виконано |
+
+### Опис можливостей:
+1. **Каталог товарів (US-1.1.2)**:
+   - Адаптивна сітка (1 колонка на мобільних, 2 на планшетах, 3 на десктопі).
+   - Картка букета з фото, назвою, ціною у гривнях (`₴`), статусом наявності та кнопкою `Add to Cart 🛍`.
+   - Ліва панель фільтрації: вибір події (Occasion), діапазон цін, типи квітів та кольори.
+2. **Швидкий пошук (US-1.4.2)**:
+   - Рядок пошуку в шапці (Header) у формі рожевої капсули з лупою та очищенням `✕`.
+   - Живий випадаючий список результатів (Autocomplete) з прев'ю та цінами.
+   - Адаптивне розгортання на мобільних пристроях.
+3. **Сортування (US-1.5.2)**:
+   - Меню `Sort By =` за макетом `Catalog.png`.
+   - Три режими сортування: *За новизною*, *Ціна: від дешевих до дорогих*, *Ціна: від дорогих до дешевих*.
+4. **Ліниве завантаження фото (NFR-03.2)**:
+   - Використання `IntersectionObserver` з упереджувальним завантаженням (`rootMargin: 200px`).
+   - Фірмовий скелетон (shimmer) під час завантаження для запобігання зсуву макета (CLS = 0).
+
+---
+
+## 🚀 Швидкий запуск проєкту
+
+### Вимоги:
+- Встановлений [Node.js](https://nodejs.org/) (версія 18 або новіша)
+- Пакетний менеджер `npm`
+
+### Кроки запуску:
+
+1. **Клонувати репозиторій**:
+   ```bash
+   git clone https://github.com/Fiore-CHNU/Fiore-App.git
+   cd Fiore-App
+   ```
+
+2. **Встановити залежності**:
+   ```bash
+   npm install
+   ```
+
+3. **Запустити сервер розробки (Development)**:
+   ```bash
+   npm run dev
+   ```
+   Після запуску відкрийте у браузері: [http://localhost:5173](http://localhost:5173)
+
+4. **Збірка для продакшну (Build)**:
+   ```bash
+   npm run build
+   ```
+
+---
+
+## 🔌 Інтеграція з бекендом (Backend Integration)
+
+Клієнт налаштований на взаємодію з REST API бекенду Fiore:
+- Базовий URL: `http://localhost:5090/api/v1`
+- Ендпоінт каталогу: `GET /api/v1/catalog/products`
+
+> 💡 **Автономний режим (Smart Fallback)**: Якщо бекенд тимчасово вимкнено або не піднято базу даних, фронтенд автоматично перемикається на клієнтську фільтрацію даних з макетів Figma. Інтерфейс працює стабільно і без помилок у будь-якому середовищі.
+
+---
+
+## 🌳 Git Flow та стратегія гілок
+
+Кожна задача з Jira ведеться в окремій гілці за конвенцією:  
+`feature/<Jira-Key>-<короткий-опис>`
+
+Перед злиттям у гілку `main` створюється **Pull Request (PR)** та проводиться **Code Review** напарником.
