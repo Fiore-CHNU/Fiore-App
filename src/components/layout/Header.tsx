@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Search, ShoppingBag, Heart, User, X } from 'lucide-react';
 import { Logo } from '../common/Logo';
 import { INITIAL_PRODUCTS } from '../../services/api';
 import type { CatalogProductItem } from '../../types/catalog';
 import { useCart } from '../../hooks/useCart';
+import { useAuth } from '../../hooks/useAuth';
 
 interface HeaderProps {
   cartItemCount?: number;
@@ -21,6 +23,7 @@ export const Header: React.FC<HeaderProps> = ({
   onSelectProduct,
 }) => {
   const { totalCount, setIsCartOpen } = useCart();
+  const { user } = useAuth();
   const cartItemCount = propCartItemCount !== undefined ? propCartItemCount : totalCount;
   const handleCartClick = onOpenCart || (() => setIsCartOpen(true));
 
@@ -196,12 +199,18 @@ export const Header: React.FC<HeaderProps> = ({
             <Heart className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={1.8} />
           </button>
 
-          <button
-            aria-label="Особистий кабінет"
-            className="p-1 hover:text-[#F5B2E2] transition-transform active:scale-95"
+          {/* Staff Login / Admin Entry (US-7.1) */}
+          <Link
+            to={user ? "/admin" : "/admin/login"}
+            aria-label={user ? `Кабінет (${user.role})` : "Вхід до адмін-панелі"}
+            className="p-1 hover:text-[#F5B2E2] transition-transform active:scale-95 relative"
+            title={user ? `Авторизовано як ${user.fullName} (${user.role})` : "Вхід до адмін-панелі"}
           >
             <User className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={1.8} />
-          </button>
+            {user && (
+              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-[#1E0B1A]" />
+            )}
+          </Link>
         </div>
       </div>
 
