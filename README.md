@@ -49,6 +49,7 @@ npm run lint
 | **EAN-346** | **US-1.5.2** Frontend: Перемикач сортування (за ціною та новизною) | `main` |  **Done** |
 | **EAN-465** | **NFR-03.2** Frontend: Ліниве завантаження фото (IntersectionObserver) | `main` |  **Done** |
 | **EAN-363** | **US-3.1.2** Frontend: Кнопка «Додати в кошик», лічильник | `main` |  **Done** |
+| **EAN-355 / EAN-357** | **US-2.2.2** Frontend: Блок опису, габарити та схожі букети | `feature/EAN-357-product-description-similar` |  **Done** |
 | **EAN-426 / EAN-428** | **US-7.1.2** Frontend: Сторінка входу до адмін-панелі, вихід, захист ролей | `feature/EAN-428-admin-login` |  **Done** |
 | **EAN-364** | **US-3.2.2** Frontend: Сторінка кошика, редагування кількості | `feature/EAN-364-cart-page` | ⏳ **Next / To Do** |
 | **US-4.1 – 4.5** | Frontend: Оформлення замовлення (Checkout, валідація, ліміт 500 грн) | — | ⏳ **Backlog** |
