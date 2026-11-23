@@ -3,12 +3,14 @@ import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
 import { CatalogPage } from './pages/CatalogPage';
 import { CartDrawer } from './components/cart/CartDrawer';
+import { ProductDetailsModal } from './components/product/ProductDetailsModal';
 import { CartProvider } from './context/CartContext';
 import { useCart } from './hooks/useCart';
 import type { CatalogProductItem } from './types/catalog';
 
 function AppContent() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedProduct, setSelectedProduct] = useState<CatalogProductItem | null>(null);
   const { addToCart } = useCart();
 
   const handleAddToCart = (product: CatalogProductItem) => {
@@ -20,6 +22,7 @@ function AppContent() {
       <Header
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
+        onSelectProduct={setSelectedProduct}
       />
 
       <div className="flex-1">
@@ -27,11 +30,21 @@ function AppContent() {
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           onAddToCart={handleAddToCart}
+          onSelectProduct={setSelectedProduct}
         />
       </div>
 
       <Footer />
       <CartDrawer />
+
+      {selectedProduct && (
+        <ProductDetailsModal
+          productId={selectedProduct.id}
+          onClose={() => setSelectedProduct(null)}
+          onSelectProduct={setSelectedProduct}
+          onAddToCart={handleAddToCart}
+        />
+      )}
     </div>
   );
 }

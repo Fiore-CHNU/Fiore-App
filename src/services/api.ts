@@ -248,5 +248,37 @@ export async function fetchProductDetails(id: string): Promise<ProductDetailsRes
       { id: 'f-2', kind: 'FlowerType', slug: 'roses', name: 'Троянди' },
       { id: 'f-3', kind: 'Color', slug: 'plum', name: 'Бордовий' },
     ],
+    packaging: 'Преміальний матовий папір, дизайнерська атласна стрічка та захисний аквабокс для збереження свіжості',
   };
+}
+
+export async function fetchSimilarProducts(productId: string): Promise<CatalogProductItem[]> {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const res = await fetch(`${API_BASE_URL}/catalog/products/${productId}/similar`, {
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    if (res.ok) {
+      return (await res.json()) as CatalogProductItem[];
+    }
+  } catch {
+    // fallback to smart mock matching
+  }
+
+  const current = INITIAL_PRODUCTS.find(p => p.id === productId);
+  const targetPrice = current ? current.price : 1800;
+
+  // Filter out current product, sort by price closeness and availability
+  return [...INITIAL_PRODUCTS]
+    .filter(p => p.id !== productId)
+    .sort((a, b) => {
+      // Prioritize available products
+      if (a.isAvailable !== b.isAvailable) {
+        return a.isAvailable ? -1 : 1;
+      }
+      return Math.abs(a.price - targetPrice) - Math.abs(b.price - targetPrice);
+    })
+    .slice(0, 4);
 }
