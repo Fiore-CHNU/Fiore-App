@@ -3,6 +3,7 @@ import { Search, ShoppingBag, Heart, User, X } from 'lucide-react';
 import { Logo } from '../common/Logo';
 import { INITIAL_PRODUCTS } from '../../services/api';
 import type { CatalogProductItem } from '../../types/catalog';
+import { useCart } from '../../hooks/useCart';
 
 interface HeaderProps {
   cartItemCount?: number;
@@ -13,12 +14,16 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  cartItemCount = 0,
+  cartItemCount: propCartItemCount,
   onOpenCart,
   searchQuery,
   onSearchChange,
   onSelectProduct,
 }) => {
+  const { totalCount, setIsCartOpen } = useCart();
+  const cartItemCount = propCartItemCount !== undefined ? propCartItemCount : totalCount;
+  const handleCartClick = onOpenCart || (() => setIsCartOpen(true));
+
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
@@ -172,14 +177,14 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
 
           <button
-            onClick={onOpenCart}
-            aria-label="Кошик"
+            onClick={handleCartClick}
+            aria-label={cartItemCount > 0 ? `Кошик, ${cartItemCount} товарів` : 'Кошик'}
             className="p-1 hover:text-[#F5B2E2] transition-transform active:scale-95 relative"
           >
             <ShoppingBag className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={1.8} />
             {cartItemCount > 0 && (
-              <span className="absolute -top-1.5 -right-2 bg-[#F5B2E2] text-[#1E0B1A] text-[11px] font-bold w-4 h-4 rounded-full flex items-center justify-center animate-scale-in">
-                {cartItemCount}
+              <span className="absolute -top-1.5 -right-2 bg-[#F5B2E2] text-[#1E0B1A] text-[11px] font-bold min-w-4 h-4 px-1 rounded-full flex items-center justify-center animate-scale-in shadow-md">
+                {cartItemCount > 99 ? '99+' : cartItemCount}
               </span>
             )}
           </button>
