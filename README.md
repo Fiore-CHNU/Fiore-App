@@ -1,32 +1,103 @@
-# React + TypeScript + Vite
+# Fiore — Преміальний онлайн-каталог флористики 🌸
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+**Fiore** — це сучасний веб-додаток електронної комерції для замовлення преміальних квіткових композицій та букетів. Інтерфейс виконаний у вишуканій темній колірній гамі *Dark Luxury / Noir* (`#1E0B1A`, сливово-рожеві акценти `#F5B2E2`, глибокі винні тони) згідно з дизайн-системою Figma.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🛠 Технологічний стек
 
-## React Compiler
+- **Core:** [React 19](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/)
+- **Збірка:** [Vite 8](https://vitejs.dev/) з підтримкою Fast Refresh
+- **Стилізація:** [Tailwind CSS v4](https://tailwindcss.com/) (`@tailwindcss/vite` з дизайн-токенами `@theme`)
+- **Іконки:** [Lucide React](https://lucide.dev/)
+- **Маршрутизація:** [React Router v7](https://reactrouter.com/)
+- **Лінтер & Якість коду:** [Oxlint](https://oxc.rs/) & ESLint
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the Oxlint configuration
+## 🚀 Швидкий старт
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+### Встановлення залежностей
+```bash
+npm install
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+### Запуск локального сервера розробки
+```bash
+npm run dev
+```
+Додаток буде доступний за адресою `http://localhost:5173`.
+
+### Перевірка типів та Production-збірка
+```bash
+npm run build
+```
+
+### Перевірка лінтером
+```bash
+npm run lint
+```
+
+---
+
+## 📋 Статус реалізації тікетів (Sprint & Roadmap)
+
+| Epic / Тікет | User Story / Завдання | Гілка | Статус |
+|---|---|---|:---:|
+| **EAN-336** | **US-1.1.2** Frontend: Сітка карток каталогу, адаптивна верстка | `main` / `feature/EAN-336-catalog-grid` |  **Done** |
+| **EAN-341** | **US-1.4.2** Frontend: Рядок швидкого пошуку у шапці з підказками | `main` / `feature/EAN-341-search-bar` |  **Done** |
+| **EAN-346** | **US-1.5.2** Frontend: Перемикач сортування (за ціною та новизною) | `feature/EAN-346-sorting-switch` |  **PR Ready** |
+| **EAN-465** | **NFR-03.2** Frontend: Ліниве завантаження фото (IntersectionObserver) | `feature/EAN-465-lazy-loading` |  **PR Ready** |
+| **EAN-360 / EAN-361** | **Epic Кошик** / Додавання букета в кошик | — | 🟡 **In Progress** |
+| **EAN-363** | **US-3.1.2** Frontend: Кнопка «Додати в кошик», лічильник | `feature/EAN-363-add-to-cart-counter` |  **Done** |
+| **EAN-364** | **US-3.2.2** Frontend: Сторінка кошика, редагування кількості | `feature/EAN-364-cart-page` | ⏳ **Next / To Do** |
+| **US-4.1 – 4.5** | Frontend: Оформлення замовлення (Checkout, валідація, ліміт 500 грн) | — | ⏳ **Backlog** |
+| **US-5.1** | Frontend & Integration: Онлайн-оплата (LiqPay / WayForPay) | — | ⏳ **Backlog** |
+
+---
+
+## 📦 Функціональність додатка
+
+### 1. Каталог та картки товарів (US-1.1, US-1.2, EAN-336)
+- Адаптивна сітка товарів (від мобільних 320px до десктопу 1440px).
+- Бічна панель фільтрів: за приводом (Occasion), типами квітів, кольоровою гамою (Colour Picker) та діапазоном цін.
+- Картка товару: плавні hover-ефекти, статус наявності («Немає в наявності»), форматування ціни в грн.
+
+### 2. Верхня панель та живий пошук (US-1.4, EAN-341)
+- Пошуковий рядок з автодоповненням (quick suggestions) при вводі від 2 символів.
+- Клік на знайдений букет одразу фокусує товар.
+
+### 3. Додавання в кошик та лічильник (US-3.1, EAN-363)
+- **Кнопка «Додати в кошик»:**
+  - Мікроінтеракція при натисканні (анімація галочки та статус «Додано»).
+  - Відображення лічильника кількості товару безпосередньо в кнопці (`+1`, `+2`), якщо букет уже в кошику.
+  - Окремий бейдж на фото товару з кількістю доданих одиниць.
+  - Блокування кнопки (`disabled`), якщо товару немає в наявності (TC-3.1-2).
+- **Лічильник у шапці:**
+  - Індикатор загальної кількості товарів біля іконки кошика з анімацією оновлення та форматуванням `99+`.
+- **Синхронізація зі сховищем:**
+  - Стан кошика зберігається в `localStorage`, що забезпечує збереження обраних букетів після перезавантаження сторінки або закриття браузера.
+- **Висувна панель кошика (`CartDrawer`):**
+  - Швидкий перегляд доданих товарів, зміна кількості (`+`/`-`), видалення окремих позицій, підрахунок загальної суми замовлення та швидкий перехід до оформлення.
+
+---
+
+## 📁 Структура проєкту
+
+```text
+src/
+├── assets/                  # Зображення, SVG-іконки, банери
+├── components/
+│   ├── cart/                # Компоненти кошика (CartDrawer тощо)
+│   ├── catalog/             # Каталог (CatalogGrid, FilterSidebar, ProductCard)
+│   ├── common/              # Спільні UI-елементи (Logo, LazyImage)
+│   └── layout/              # Хедер (Header) та футер (Footer)
+├── context/                 # React Context (CartContext, стан кошика)
+├── hooks/                   # Кастомні хуки (useCart)
+├── pages/                   # Сторінки (CatalogPage)
+├── services/                # API клієнт (REST ендпоінти + Fallback Mock Data)
+├── types/                   # TypeScript інтерфейси (catalog, cart)
+├── App.tsx                  # Головний компонент з CartProvider
+├── index.css                # Tailwind CSS v4 та дизайн-токени
+└── main.tsx                 # Точка входу додатка
+```
