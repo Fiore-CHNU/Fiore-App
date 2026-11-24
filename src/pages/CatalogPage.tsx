@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, X } from 'lucide-react';
+import { Search, X, Filter } from 'lucide-react';
 import { FilterSidebar } from '../components/catalog/FilterSidebar';
 import { CatalogGrid } from '../components/catalog/CatalogGrid';
 import { SortSelector } from '../components/catalog/SortSelector';
@@ -23,6 +23,7 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
 
   const [filters, setFilters] = useState<FilterState>({
     search: searchQuery,
@@ -67,6 +68,31 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
     setPage(1);
     loadData(1, true);
   }, [filters.sort, filters.minPrice, filters.maxPrice, filters.search, loadData]);
+
+  // Lock body scroll and listen for Escape when mobile filter drawer is open
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsMobileFiltersOpen(false);
+      }
+    };
+    if (isMobileFiltersOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = '';
+    };
+  }, [isMobileFiltersOpen]);
+
+  const activeFiltersCount =
+    filters.occasions.length +
+    filters.flowerTypes.length +
+    filters.colors.length +
+    (filters.minPrice !== undefined || filters.maxPrice !== undefined ? 1 : 0);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -143,8 +169,22 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
           </button>
         </form>
 
-        {/* Dedicated Sort Selector Component (US-1.5.2) */}
-        <div className="self-end md:self-auto">
+        {/* Mobile Filter Trigger + Sort Selector Row */}
+        <div className="flex items-center justify-between md:justify-end gap-3 w-full md:w-auto">
+          <button
+            type="button"
+            onClick={() => setIsMobileFiltersOpen(true)}
+            className="lg:hidden flex items-center gap-2 px-4 py-2 rounded-full bg-[#2E1229] border border-[#522149] text-white/90 hover:text-white hover:border-[#F5B2E2]/60 hover:bg-[#3D1A37] transition-all text-[13px] font-sans font-medium tracking-wide"
+          >
+            <Filter className="w-4 h-4 text-[#F5B2E2]" strokeWidth={2} />
+            <span>Filtration</span>
+            {activeFiltersCount > 0 && (
+              <span className="bg-[#F5B2E2] text-[#1E0B1A] text-[11px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+                {activeFiltersCount}
+              </span>
+            )}
+          </button>
+
           <SortSelector
             currentSort={filters.sort}
             onSortChange={handleSortChange}
@@ -168,14 +208,16 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
         </div>
       )}
 
-      {/* Main Catalog Layout: Sidebar + Grid */}
+      {/* Main Catalog Layout: Desktop Sidebar + Grid */}
       <div className="flex flex-col lg:flex-row gap-8 items-start">
-        <FilterSidebar
-          filters={filters}
-          onChangeFilters={setFilters}
-          onReset={handleResetFilters}
-          onApply={() => loadData(1, true)}
-        />
+        <div className="hidden lg:block shrink-0">
+          <FilterSidebar
+            filters={filters}
+            onChangeFilters={setFilters}
+            onReset={handleResetFilters}
+            onApply={() => loadData(1, true)}
+          />
+        </div>
 
         <CatalogGrid
           products={products}
@@ -186,6 +228,32 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
           onSelectProduct={onSelectProduct}
         />
       </div>
+
+      {/* Mobile Filter Drawer (lg:hidden) */}
+      {isMobileFiltersOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 flex justify-start" role="dialog" aria-modal="true">
+          <div
+            onClick={() => setIsMobileFiltersOpen(false)}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity animate-fade-in"
+          />
+          <div className="relative w-full max-w-[320px] h-full bg-[#3A1633] border-r border-[#522149] overflow-y-auto z-10 shadow-2xl">
+            <FilterSidebar
+              filters={filters}
+              onChangeFilters={setFilters}
+              onReset={() => {
+                handleResetFilters();
+                setIsMobileFiltersOpen(false);
+              }}
+              onApply={() => {
+                loadData(1, true);
+                setIsMobileFiltersOpen(false);
+              }}
+              onClose={() => setIsMobileFiltersOpen(false)}
+              className="border-0 shadow-none rounded-none"
+            />
+          </div>
+        </div>
+      )}
     </main>
   );
 };
