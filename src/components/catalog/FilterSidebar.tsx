@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, X } from 'lucide-react';
 import type { FilterState } from '../../types/catalog';
 
 interface FilterSidebarProps {
@@ -7,6 +7,8 @@ interface FilterSidebarProps {
   onChangeFilters: (newFilters: FilterState) => void;
   onReset: () => void;
   onApply: () => void;
+  onClose?: () => void;
+  className?: string;
 }
 
 const OCCASIONS = ['Holiday', 'Birthday', 'Anniversary', 'Concert'];
@@ -26,6 +28,8 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   onChangeFilters,
   onReset,
   onApply,
+  onClose,
+  className = '',
 }) => {
   const [openSections, setOpenSections] = useState({
     occasion: true,
@@ -60,11 +64,23 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   };
 
   return (
-    <aside className="w-full lg:w-[280px] shrink-0 bg-[#3A1633] rounded-2xl p-5 border border-[#522149] shadow-xl space-y-4">
+    <aside className={`w-full lg:w-[280px] shrink-0 bg-[#3A1633] rounded-2xl p-5 border border-[#522149] shadow-xl space-y-4 ${className}`}>
       {/* Title */}
-      <h2 className="font-serif text-2xl text-white font-medium tracking-wide pb-2 border-b border-[#522149]">
-        Filtration
-      </h2>
+      <div className="flex items-center justify-between pb-2 border-b border-[#522149]">
+        <h2 className="font-serif text-2xl text-white font-medium tracking-wide">
+          Filtration
+        </h2>
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Закрити фільтри"
+            className="p-1.5 rounded-full hover:bg-white/10 text-white/80 hover:text-white transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
+      </div>
 
       {/* 1. Occasion Section */}
       <div className="bg-[#F5B2E2] rounded-xl p-3.5 text-[#1E0B1A]">
