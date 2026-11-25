@@ -21,7 +21,7 @@ export const CatalogGrid: React.FC<CatalogGridProps> = ({
 }) => {
   if (isLoading && products.length === 0) {
     return (
-      <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="flex-1 grid grid-cols-2 gap-3.5 sm:gap-6 lg:gap-7">
         {Array.from({ length: 6 }).map((_, i) => (
           <div key={i} className="flex flex-col gap-3">
             <div className="w-full aspect-[4/5] rounded-2xl bg-[#2D1227] animate-pulse" />
@@ -46,8 +46,8 @@ export const CatalogGrid: React.FC<CatalogGridProps> = ({
 
   return (
     <div className="flex-1 flex flex-col">
-      {/* 3-Column Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-7">
+      {/* 2-Column Grid */}
+      <div className="grid grid-cols-2 gap-3.5 sm:gap-6 lg:gap-7">
         {products.map(product => (
           <ProductCard
             key={product.id}

@@ -370,35 +370,100 @@ export async function fetchProductDetails(id: string): Promise<ProductDetailsRes
   };
 }
 
-export async function fetchSimilarProducts(productId: string): Promise<CatalogProductItem[]> {
+export async function fetchSimilarProducts(
+  productId: string,
+  currentProduct?: {
+    price?: number;
+    facets?: { kind: string; slug: string }[];
+  }
+): Promise<CatalogProductItem[]> {
+  const flowerTypeSlug = currentProduct?.facets?.find(
+    f => f.kind.toLowerCase() === 'flowertype'
+  )?.slug;
+  const occasionSlug = currentProduct?.facets?.find(
+    f => f.kind.toLowerCase() === 'occasion'
+  )?.slug;
+  const targetPrice = currentProduct?.price ?? 1800;
+
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2500);
-    const res = await fetch(`${API_BASE_URL}/catalog/products/${productId}/similar`, {
-      signal: controller.signal,
-    });
-    clearTimeout(timeoutId);
-    if (res.ok) {
-      const data = (await res.json()) as CatalogProductItem[];
-      return data.map(item => ({
-        ...item,
-        currency: item.currency === 'UAH' ? '₴' : item.currency,
-      }));
+    // Fetch products matching flower type, occasion, and general catalog in parallel
+    const [sameFlowerRes, sameOccasionRes, generalRes] = await Promise.all([
+      flowerTypeSlug
+        ? fetchCatalogProducts({ flowerType: flowerTypeSlug, pageSize: 8 })
+        : Promise.resolve({ items: [] }),
+      occasionSlug
+        ? fetchCatalogProducts({ occasion: occasionSlug, pageSize: 8 })
+        : Promise.resolve({ items: [] }),
+      fetchCatalogProducts({ pageSize: 12 }),
+    ]);
+
+    // Gather candidate items from backend
+    const flowerItemIds = new Set(sameFlowerRes.items.map(p => p.id));
+    const occasionItemIds = new Set(sameOccasionRes.items.map(p => p.id));
+
+    // Combine all candidates excluding current product
+    const candidateMap = new Map<string, CatalogProductItem>();
+    for (const item of [...sameFlowerRes.items, ...sameOccasionRes.items, ...generalRes.items]) {
+      if (item.id !== productId && !candidateMap.has(item.id)) {
+        candidateMap.set(item.id, item);
+      }
+    }
+
+    const candidates = Array.from(candidateMap.values());
+
+    if (candidates.length > 0) {
+      // Score candidates: same flower (+10), same occasion (+5), available (+3), closer price
+      candidates.sort((a, b) => {
+        let scoreA = 0;
+        let scoreB = 0;
+
+        if (flowerItemIds.has(a.id)) scoreA += 10;
+        if (flowerItemIds.has(b.id)) scoreB += 10;
+
+        if (occasionItemIds.has(a.id)) scoreA += 5;
+        if (occasionItemIds.has(b.id)) scoreB += 5;
+
+        if (a.isAvailable) scoreA += 3;
+        if (b.isAvailable) scoreB += 3;
+
+        const priceDiffA = Math.abs(a.price - targetPrice);
+        const priceDiffB = Math.abs(b.price - targetPrice);
+
+        if (scoreA !== scoreB) {
+          return scoreB - scoreA;
+        }
+        return priceDiffA - priceDiffB;
+      });
+
+      return candidates.slice(0, 4);
     }
   } catch {
-    // fallback to smart mock matching
+    // Fallback if network fails
   }
 
-  const current = INITIAL_PRODUCTS.find(p => p.id === productId);
-  const targetPrice = current ? current.price : 1800;
-
+  // Offline / local fallback matching on INITIAL_PRODUCTS
   return [...INITIAL_PRODUCTS]
     .filter(p => p.id !== productId)
     .sort((a, b) => {
-      if (a.isAvailable !== b.isAvailable) {
-        return a.isAvailable ? -1 : 1;
+      let scoreA = 0;
+      let scoreB = 0;
+
+      if (flowerTypeSlug && a.flowerTypes?.includes(flowerTypeSlug)) scoreA += 10;
+      if (flowerTypeSlug && b.flowerTypes?.includes(flowerTypeSlug)) scoreB += 10;
+
+      if (occasionSlug && a.occasions?.includes(occasionSlug)) scoreA += 5;
+      if (occasionSlug && b.occasions?.includes(occasionSlug)) scoreB += 5;
+
+      if (a.isAvailable) scoreA += 3;
+      if (b.isAvailable) scoreB += 3;
+
+      const priceDiffA = Math.abs(a.price - targetPrice);
+      const priceDiffB = Math.abs(b.price - targetPrice);
+
+      if (scoreA !== scoreB) {
+        return scoreB - scoreA;
       }
-      return Math.abs(a.price - targetPrice) - Math.abs(b.price - targetPrice);
+      return priceDiffA - priceDiffB;
     })
     .slice(0, 4);
 }

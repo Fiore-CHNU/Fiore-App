@@ -34,16 +34,16 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
     setIsLoading(true);
     setError(null);
     try {
-      const [productData, similarData] = await Promise.all([
-        fetchProductDetails(productId),
-        fetchSimilarProducts(productId),
-      ]);
+      const productData = await fetchProductDetails(productId);
 
       if (!productData) {
         throw new Error('Дані про букет не знайдено');
       }
 
       setDetails(productData);
+
+      // Fetch truly similar products using product's facets and price from backend
+      const similarData = await fetchSimilarProducts(productId, productData);
       setSimilar(similarData);
       setActiveImageIndex(0);
     } catch (err) {
