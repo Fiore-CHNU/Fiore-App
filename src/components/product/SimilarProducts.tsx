@@ -46,7 +46,13 @@ export const SimilarProducts: React.FC<SimilarProductsProps> = ({
             {isCurrentAvailable ? 'Схожі букети' : 'Рекомендовані букети'}
           </h3>
           <span className="text-xs text-[#F5B2E2] flex items-center gap-1">
-            <span>{products.length} варіанти</span>
+            <span>
+              {products.length === 1
+                ? '1 варіант'
+                : products.length >= 2 && products.length <= 4
+                ? `${products.length} варіанти`
+                : `${products.length} варіантів`}
+            </span>
             <ArrowRight className="w-3.5 h-3.5" />
           </span>
         </div>
