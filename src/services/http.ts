@@ -40,6 +40,8 @@ interface RequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
   body?: unknown;
   cartToken?: string;
+  /** Staff JWT for /admin endpoints. */
+  accessToken?: string;
   signal?: AbortSignal;
 }
 
@@ -47,6 +49,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   const headers: Record<string, string> = { Accept: 'application/json' };
   if (options.body !== undefined) headers['Content-Type'] = 'application/json';
   if (options.cartToken) headers['X-Cart-Token'] = options.cartToken;
+  if (options.accessToken) headers.Authorization = `Bearer ${options.accessToken}`;
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method: options.method ?? 'GET',

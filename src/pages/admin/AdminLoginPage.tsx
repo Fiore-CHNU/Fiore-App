@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { Lock, User, Eye, EyeOff, AlertCircle, Clock, ShieldCheck, ArrowLeft, Loader2 } from 'lucide-react';
+import { Lock, Mail, Eye, EyeOff, AlertCircle, Clock, ShieldCheck, ArrowLeft, Loader2 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { Logo } from '../../components/common/Logo';
 
 export const AdminLoginPage: React.FC = () => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
@@ -17,22 +17,11 @@ export const AdminLoginPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username.trim() || !password) return;
+    if (!email.trim() || !password) return;
 
-    const success = await login({ username, password });
+    const success = await login({ email, password });
     if (success) {
       navigate(from, { replace: true });
-    }
-  };
-
-  const fillCredentials = (userType: 'admin' | 'manager') => {
-    clearError();
-    if (userType === 'admin') {
-      setUsername('admin');
-      setPassword('admin123');
-    } else {
-      setUsername('manager');
-      setPassword('manager123');
     }
   };
 
@@ -105,22 +94,23 @@ export const AdminLoginPage: React.FC = () => {
             {/* Username Input */}
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-[#FFD7F1]/80 mb-1.5">
-                Логін або Email
+                Email
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-white/40">
-                  <User className="w-4 h-4" />
+                  <Mail className="w-4 h-4" />
                 </div>
                 <input
-                  type="text"
+                  type="email"
+                  autoComplete="username"
                   required
                   disabled={isLocked || isLoading}
-                  value={username}
+                  value={email}
                   onChange={e => {
-                    setUsername(e.target.value);
+                    setEmail(e.target.value);
                     if (error) clearError();
                   }}
-                  placeholder="admin або manager"
+                  placeholder="name@fiore.ua"
                   className="w-full bg-[#1A0917] border border-[#481A3F] focus:border-[#F5B2E2] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-1 focus:ring-[#F5B2E2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
@@ -144,6 +134,7 @@ export const AdminLoginPage: React.FC = () => {
                     setPassword(e.target.value);
                     if (error) clearError();
                   }}
+                  autoComplete="current-password"
                   placeholder="••••••••"
                   className="w-full bg-[#1A0917] border border-[#481A3F] focus:border-[#F5B2E2] rounded-xl pl-10 pr-10 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-1 focus:ring-[#F5B2E2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 />
@@ -161,7 +152,7 @@ export const AdminLoginPage: React.FC = () => {
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={isLocked || isLoading || !username || !password}
+              disabled={isLocked || isLoading || !email || !password}
               className="w-full mt-2 py-3 px-4 rounded-xl bg-[#F5B2E2] hover:bg-[#FDBDE9] text-[#1E0B1A] font-semibold text-sm transition-all shadow-lg active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
             >
               {isLoading ? (
@@ -175,30 +166,6 @@ export const AdminLoginPage: React.FC = () => {
             </button>
           </form>
 
-          {/* Quick Demo Credentials */}
-          <div className="mt-8 pt-6 border-t border-[#381532]">
-            <p className="text-[11px] uppercase tracking-wider text-white/50 text-center mb-3">
-              Тестові облікові записи (демо):
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => fillCredentials('admin')}
-                className="py-1.5 px-2.5 rounded-lg bg-[#34132E] hover:bg-[#431A3C] border border-[#4E1E45] text-xs text-[#FFD7F1] transition-colors text-center"
-              >
-                <span className="font-semibold block">Адміністратор</span>
-                <span className="text-[10px] text-white/50 block">admin / admin123</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => fillCredentials('manager')}
-                className="py-1.5 px-2.5 rounded-lg bg-[#34132E] hover:bg-[#431A3C] border border-[#4E1E45] text-xs text-[#FFD7F1] transition-colors text-center"
-              >
-                <span className="font-semibold block">Менеджер</span>
-                <span className="text-[10px] text-white/50 block">manager / manager123</span>
-              </button>
-            </div>
-          </div>
         </div>
       </main>
 

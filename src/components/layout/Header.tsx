@@ -5,6 +5,7 @@ import { Logo } from '../common/Logo';
 import type { CatalogProductItem } from '../../types/catalog';
 import { useCart } from '../../hooks/useCart';
 import { useAuth } from '../../hooks/useAuth';
+import { STAFF_ROLE_LABELS } from '../../types/auth';
 
 interface HeaderProps {
   cartItemCount?: number;
@@ -102,9 +103,9 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Staff Login / Admin Entry */}
           <Link
             to={user ? "/admin" : "/admin/login"}
-            aria-label={user ? `Кабінет (${user.role})` : "Вхід до адмін-панелі"}
+            aria-label={user ? `Панель персоналу (${STAFF_ROLE_LABELS[user.role]})` : "Вхід до адмін-панелі"}
             className="p-1 hover:text-[#F5B2E2] transition-transform active:scale-95 relative"
-            title={user ? `Авторизовано як ${user.fullName} (${user.role})` : "Вхід до адмін-панелі"}
+            title={user ? `Авторизовано як ${user.email} (${STAFF_ROLE_LABELS[user.role]})` : "Вхід до адмін-панелі"}
           >
             <User className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={1.8} />
             {user && (

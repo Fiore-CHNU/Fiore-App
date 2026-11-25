@@ -1,326 +1,316 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { LogOut, Store, Shield, User, ShoppingBag, Tag, CheckCircle2, XCircle, Bell } from 'lucide-react';
+import { Bell, BellOff, ClipboardList, Flower2, Loader2, LogOut, RefreshCw, Shield, Store, User } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
-import { INITIAL_PRODUCTS } from '../../services/api';
+import { ApiError, apiRequest, formatDateTime, formatSlot, formatUah } from '../../services/http';
+import { adminApi, type AdminOrderListItem } from '../../services/adminApi';
+import { ORDER_STATUS_LABELS, type OrderStatus } from '../../types/order';
+import { STAFF_ROLE_LABELS } from '../../types/auth';
+import { OrderCardDrawer } from './OrderCardDrawer';
+
+/** US-9.1: new paid orders appear within 30 seconds. */
+const POLL_INTERVAL_MS = 30_000;
+
+const STATUS_FILTERS: { value: OrderStatus | ''; label: string }[] = [
+  { value: '', label: 'Усі, крім неоплачених' },
+  { value: 'paid', label: ORDER_STATUS_LABELS.paid },
+  { value: 'accepted', label: ORDER_STATUS_LABELS.accepted },
+  { value: 'assembling', label: ORDER_STATUS_LABELS.assembling },
+  { value: 'readyForDelivery', label: ORDER_STATUS_LABELS.readyForDelivery },
+  { value: 'outForDelivery', label: ORDER_STATUS_LABELS.outForDelivery },
+  { value: 'delivered', label: ORDER_STATUS_LABELS.delivered },
+  { value: 'cancelled', label: ORDER_STATUS_LABELS.cancelled },
+  { value: 'pendingPayment', label: ORDER_STATUS_LABELS.pendingPayment },
+];
+
+const STATUS_BADGE: Partial<Record<OrderStatus, string>> = {
+  paid: 'bg-[#F5B2E2] text-[#1E0B1A]',
+  cancelled: 'bg-red-500/15 text-red-200',
+  delivered: 'bg-emerald-500/15 text-emerald-200',
+};
+
+/** Short tone for a new order; browsers allow audio only after the user enabled it with a click. */
+const playChime = (context: AudioContext) => {
+  const oscillator = context.createOscillator();
+  const gain = context.createGain();
+  oscillator.frequency.value = 880;
+  gain.gain.setValueAtTime(0.0001, context.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.2, context.currentTime + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.6);
+  oscillator.connect(gain).connect(context.destination);
+  oscillator.start();
+  oscillator.stop(context.currentTime + 0.6);
+};
+
+interface CatalogProduct {
+  id: string;
+  sku: string;
+  name: string;
+  price: number;
+  imageUrl: string | null;
+  isAvailable: boolean;
+}
 
 export const AdminDashboardPage: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [tab, setTab] = useState<'orders' | 'catalog'>('orders');
 
-  // Mock toggle for 1-click stock availability (US-8.3)
-  const [stockStatus, setStockStatus] = useState<Record<string, boolean>>(() => {
-    const initial: Record<string, boolean> = {};
-    INITIAL_PRODUCTS.forEach(p => {
-      initial[p.id] = p.isAvailable;
-    });
-    return initial;
-  });
-
-  const handleToggleStock = (id: string) => {
-    setStockStatus(prev => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
-  };
-
-  const handleSignOut = () => {
-    // US-7.1 Scenario 4: Sign out and redirect to login
+  const handleSignOut = useCallback(() => {
+    // US-7.1 scenario 4: sign out and return to the login page.
     logout();
     navigate('/admin/login', { replace: true });
-  };
+  }, [logout, navigate]);
 
-  const roleTitle = user?.role === 'admin' ? 'Адміністратор' : 'Менеджер';
+  if (!user) return null;
 
   return (
     <div className="min-h-screen bg-[#180816] text-white flex flex-col">
-      {/* Admin Top Navigation */}
       <header className="bg-[#240D20] border-b border-[#431A3C] sticky top-0 z-30 shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-8 h-18 flex items-center justify-between gap-4">
-          {/* Logo & Admin Badge */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <Link to="/" className="flex items-center gap-2">
-              <span className="font-serif text-2xl font-bold tracking-widest text-[#F5B2E2]">
-                FIORE
-              </span>
-            </Link>
+            <Link to="/" className="font-serif text-2xl font-bold tracking-widest text-[#F5B2E2]">FIORE</Link>
             <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#3D1735] border border-[#5A2250] text-[11px] font-semibold text-[#FFD7F1] uppercase tracking-wider">
-              <Shield className="w-3 h-3 text-[#F5B2E2]" />
-              <span>Панель персоналу</span>
+              <Shield className="w-3 h-3 text-[#F5B2E2]" /> Панель персоналу
             </span>
           </div>
-
-          {/* User profile & Actions */}
-          <div className="flex items-center gap-3 sm:gap-5">
-            {/* User Info Chip */}
-            <div className="flex items-center gap-2.5 bg-[#1B0918] border border-[#3E1638] px-3 py-1.5 rounded-full">
-              <div className="w-7 h-7 rounded-full bg-[#4E1E46] flex items-center justify-center text-[#F5B2E2]">
-                <User className="w-4 h-4" />
-              </div>
-              <div className="text-left hidden md:block">
-                <span className="text-xs font-semibold text-white block leading-tight">
-                  {user?.fullName || user?.username}
-                </span>
-                <span className="text-[10px] text-[#F5B2E2] font-medium block">
-                  {roleTitle}
-                </span>
-              </div>
-              <span className="md:hidden text-xs font-bold text-[#F5B2E2] uppercase">
-                {user?.role}
-              </span>
+          <div className="flex items-center gap-3">
+            <div className="hidden md:flex items-center gap-2 bg-[#1B0918] border border-[#3E1638] px-3 py-1.5 rounded-full">
+              <User className="w-4 h-4 text-[#F5B2E2]" />
+              <span className="text-xs">{user.email}</span>
+              <span className="text-[10px] text-[#F5B2E2]">{STAFF_ROLE_LABELS[user.role]}</span>
             </div>
-
-            {/* Back to Client Shop */}
-            <Link
-              to="/"
-              className="p-2 text-white/70 hover:text-white hover:bg-white/5 rounded-xl transition-colors hidden sm:flex items-center gap-1.5 text-xs font-medium"
-              title="Перейти на клієнтський сайт"
-            >
-              <Store className="w-4 h-4" />
-              <span>Магазин</span>
-            </Link>
-
-            {/* Sign Out Button (US-7.1 Scenario 4) */}
-            <button
-              onClick={handleSignOut}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#3B1533] hover:bg-red-950/80 hover:text-red-300 border border-[#521E47] hover:border-red-500/50 text-xs font-semibold text-white/90 transition-all shadow-sm active:scale-95"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              <span>Sign out</span>
+            <Link to="/" className="hidden sm:flex items-center gap-1.5 p-2 text-xs text-white/70 hover:text-white"><Store className="w-4 h-4" /> Магазин</Link>
+            <button onClick={handleSignOut}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#3B1533] hover:bg-red-950/80 hover:text-red-300 border border-[#521E47] text-xs font-semibold">
+              <LogOut className="w-3.5 h-3.5" /> Вийти
             </button>
           </div>
         </div>
+        <nav className="max-w-7xl mx-auto px-4 sm:px-8 flex gap-1" aria-label="Розділи">
+          {([['orders', 'Замовлення', ClipboardList], ['catalog', 'Каталог', Flower2]] as const).map(([value, label, Icon]) => (
+            <button key={value} onClick={() => setTab(value)} aria-current={tab === value ? 'page' : undefined}
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm border-b-2 transition-colors ${tab === value ? 'border-[#F5B2E2] text-[#F5B2E2]' : 'border-transparent text-white/60 hover:text-white'}`}>
+              <Icon className="w-4 h-4" /> {label}
+            </button>
+          ))}
+        </nav>
       </header>
 
-      {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl mx-auto w-full p-4 sm:p-8 space-y-8">
-        {/* Welcome Banner */}
-        <div className="bg-[#240D20] border border-[#481A3F] rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
-          <div>
-            <h1 className="font-serif text-2xl sm:text-3xl font-medium text-white">
-              Вітаємо, {user?.fullName}!
-            </h1>
-            <p className="text-sm text-white/60 mt-1 font-sans">
-              Ви авторизовані з правами: <strong className="text-[#F5B2E2] font-semibold">{roleTitle}</strong>. Доступні лише модулі вашої ролі.
-            </p>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 text-xs font-medium">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              Зміна активна
-            </span>
-          </div>
-        </div>
-
-        {/* ROLE-BASED WORKSPACES (US-7.1 Scenario 1) */}
-        {user?.role === 'admin' ? (
-          /* ================= ADMINISTRATOR VIEW (US-9.1, US-8.3) ================= */
-          <div className="space-y-8 animate-fade-in">
-            {/* Order Queue (US-9.1) */}
-            <section className="bg-[#240D20] border border-[#481A3F] rounded-3xl p-6 shadow-xl">
-              <div className="flex items-center justify-between mb-6 pb-4 border-b border-[#3E1638]">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-2 rounded-xl bg-[#4A1D42] text-[#F5B2E2]">
-                    <Bell className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h2 className="font-serif text-xl font-medium text-white">
-                      Черга нових замовлень (US-9.1)
-                    </h2>
-                    <p className="text-xs text-white/50">
-                      Автоматичне опитування кожні 30 с • Лише оплачені замовлення
-                    </p>
-                  </div>
-                </div>
-                <span className="px-3 py-1 rounded-full bg-[#F5B2E2]/10 border border-[#F5B2E2]/30 text-[#F5B2E2] text-xs font-bold">
-                  2 нових
-                </span>
-              </div>
-
-              {/* Order Items Table */}
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
-                  <thead>
-                    <tr className="border-b border-[#3A1734] text-xs uppercase tracking-wider text-white/50">
-                      <th className="py-3 px-3">Номер</th>
-                      <th className="py-3 px-3">Слот доставки</th>
-                      <th className="py-3 px-3">Одержувач</th>
-                      <th className="py-3 px-3">Сума</th>
-                      <th className="py-3 px-3">Статус</th>
-                      <th className="py-3 px-3 text-right">Дії</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#32132C]">
-                    <tr className="hover:bg-white/[0.02] transition-colors">
-                      <td className="py-3.5 px-3 font-mono font-bold text-[#F5B2E2]">#ORD-2026-084</td>
-                      <td className="py-3.5 px-3 text-white/80">Сьогодні, 16:00 – 18:00</td>
-                      <td className="py-3.5 px-3">Марія Петренко (+380 67 111-22-33)</td>
-                      <td className="py-3.5 px-3 font-bold text-[#FFD7F1]">₴1 800,00</td>
-                      <td className="py-3.5 px-3">
-                        <span className="px-2.5 py-0.5 rounded-full bg-emerald-950/70 border border-emerald-500/40 text-emerald-300 text-xs font-medium">
-                          Нове (Оплачено)
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-3 text-right">
-                        <button className="px-3 py-1 rounded-full bg-[#F5B2E2] text-[#1E0B1A] text-xs font-bold hover:bg-[#FDBDE9] transition-all">
-                          В роботу
-                        </button>
-                      </td>
-                    </tr>
-                    <tr className="hover:bg-white/[0.02] transition-colors">
-                      <td className="py-3.5 px-3 font-mono font-bold text-[#F5B2E2]">#ORD-2026-085</td>
-                      <td className="py-3.5 px-3 text-white/80">Завтра, 10:00 – 12:00</td>
-                      <td className="py-3.5 px-3">Олена Кравчук (+380 50 999-88-77)</td>
-                      <td className="py-3.5 px-3 font-bold text-[#FFD7F1]">₴2 200,00</td>
-                      <td className="py-3.5 px-3">
-                        <span className="px-2.5 py-0.5 rounded-full bg-blue-950/70 border border-blue-500/40 text-blue-300 text-xs font-medium">
-                          У процесі складання
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-3 text-right">
-                        <button className="px-3 py-1 rounded-full bg-[#3D1A39] text-[#FFD7F1] text-xs font-bold hover:bg-[#4E1E46] transition-all">
-                          Деталі
-                        </button>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </section>
-
-            {/* 1-Click Availability Manager (US-8.3) */}
-            <section className="bg-[#240D20] border border-[#481A3F] rounded-3xl p-6 shadow-xl">
-              <div className="mb-6 pb-4 border-b border-[#3E1638]">
-                <h2 className="font-serif text-xl font-medium text-white">
-                  Керування наявністю в 1 клік (US-8.3)
-                </h2>
-                <p className="text-xs text-white/50">
-                  Миттєве приховування товарів, якщо свіжі квіти закінчилися
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {INITIAL_PRODUCTS.slice(0, 6).map(product => {
-                  const isAvailable = stockStatus[product.id] ?? product.isAvailable;
-
-                  return (
-                    <div
-                      key={product.id}
-                      className="bg-[#1C0A19] border border-[#3C1636] rounded-2xl p-3.5 flex items-center justify-between gap-3"
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <img
-                          src={product.imageUrl || ''}
-                          alt={product.name}
-                          className="w-12 h-12 rounded-xl object-cover bg-[#130712] shrink-0"
-                        />
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-white truncate font-serif">
-                            {product.name}
-                          </p>
-                          <p className="text-xs text-[#FFD7F1] font-bold">
-                            {product.currency}{product.price.toLocaleString('uk-UA')}
-                          </p>
-                        </div>
-                      </div>
-
-                      <button
-                        onClick={() => handleToggleStock(product.id)}
-                        className={`px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm shrink-0 ${
-                          isAvailable
-                            ? 'bg-emerald-950 border border-emerald-500/50 text-emerald-300 hover:bg-emerald-900'
-                            : 'bg-red-950 border border-red-500/50 text-red-300 hover:bg-red-900'
-                        }`}
-                      >
-                        {isAvailable ? (
-                          <>
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            <span>В наявності</span>
-                          </>
-                        ) : (
-                          <>
-                            <XCircle className="w-3.5 h-3.5" />
-                            <span>Закінчився</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-          </div>
-        ) : (
-          /* ================= MANAGER VIEW (US-8.1, US-8.2) ================= */
-          <div className="space-y-8 animate-fade-in">
-            {/* Bouquet Catalog & Pricing (US-8.1) */}
-            <section className="bg-[#240D20] border border-[#481A3F] rounded-3xl p-6 shadow-xl">
-              <div className="flex items-center justify-between mb-6 pb-4 border-b border-[#3E1638]">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-2 rounded-xl bg-[#4A1D42] text-[#F5B2E2]">
-                    <ShoppingBag className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h2 className="font-serif text-xl font-medium text-white">
-                      Керування букетами та цінами (US-8.1)
-                    </h2>
-                    <p className="text-xs text-white/50">
-                      Редагування описів, складу композицій та підтвердження цін (BR-12)
-                    </p>
-                  </div>
-                </div>
-                <button className="px-4 py-2 rounded-full bg-[#F5B2E2] text-[#1E0B1A] text-xs font-bold hover:bg-[#FDBDE9] transition-all shadow-md">
-                  + Додати новий букет
-                </button>
-              </div>
-
-              <div className="divide-y divide-[#32132C]">
-                {INITIAL_PRODUCTS.slice(0, 4).map(product => (
-                  <div key={product.id} className="py-4 flex items-center justify-between gap-4 first:pt-0 last:pb-0">
-                    <div className="flex items-center gap-3.5 min-w-0">
-                      <img
-                        src={product.imageUrl || ''}
-                        alt={product.name}
-                        className="w-14 h-16 rounded-xl object-cover bg-[#130712] shrink-0"
-                      />
-                      <div className="min-w-0">
-                        <p className="font-serif text-base font-medium text-white truncate">
-                          {product.name}
-                        </p>
-                        <p className="text-xs text-white/50 font-mono mt-0.5">
-                          {product.sku}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-4 shrink-0">
-                      <span className="font-sans font-bold text-base text-[#FFD7F1]">
-                        {product.currency}{product.price.toLocaleString('uk-UA')}
-                      </span>
-                      <button className="px-3.5 py-1.5 rounded-full bg-[#3B1533] hover:bg-[#4E1E46] border border-[#521E47] text-xs font-semibold text-[#FFD7F1] transition-all">
-                        Редагувати
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/* Filters & Tags Association (US-8.2) */}
-            <section className="bg-[#240D20] border border-[#481A3F] rounded-3xl p-6 shadow-xl">
-              <div className="mb-4 pb-3 border-b border-[#3E1638] flex items-center gap-2">
-                <Tag className="w-5 h-5 text-[#F5B2E2]" />
-                <h2 className="font-serif text-lg font-medium text-white">
-                  Прив'язка до категорій і Colour Picker (US-8.2)
-                </h2>
-              </div>
-              <p className="text-sm text-white/70 leading-relaxed max-w-2xl">
-                Менеджер має доступ до налаштування відтінків (для фільтрації в Colour Picker) та категорій приводів (День народження, Романтика, Весілля).
-              </p>
-            </section>
-          </div>
-        )}
+      <main className="flex-1 max-w-7xl mx-auto w-full p-4 sm:p-8">
+        {tab === 'orders'
+          ? <OrdersPanel token={user.token} onUnauthorized={handleSignOut} />
+          : <CatalogPanel token={user.token} onUnauthorized={handleSignOut} />}
       </main>
     </div>
+  );
+};
+
+/* ---------- Order queue (US-9.1) ---------- */
+
+const OrdersPanel: React.FC<{ token: string; onUnauthorized: () => void }> = ({ token, onUnauthorized }) => {
+  const [status, setStatus] = useState<OrderStatus | ''>('');
+  const [deliveryDate, setDeliveryDate] = useState('');
+  const [orders, setOrders] = useState<AdminOrderListItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
+  const [highlighted, setHighlighted] = useState<Set<string>>(new Set());
+  const [openOrderId, setOpenOrderId] = useState<string | null>(null);
+  const [soundOn, setSoundOn] = useState(false);
+  const knownIds = useRef<Set<string> | null>(null);
+  const audio = useRef<AudioContext | null>(null);
+
+  const load = useCallback(async () => {
+    try {
+      const result = await adminApi.listOrders(token, { status, deliveryDate: deliveryDate || undefined });
+      const previous = knownIds.current;
+      const fresh = previous ? result.filter(order => !previous.has(order.id) && order.status === 'paid').map(order => order.id) : [];
+      knownIds.current = new Set(result.map(order => order.id));
+      if (fresh.length > 0) {
+        setHighlighted(current => new Set([...current, ...fresh]));
+        if (audio.current) playChime(audio.current);
+      }
+      setOrders(result);
+      setUpdatedAt(new Date());
+      setError(null);
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) onUnauthorized();
+      else setError('Не вдалося завантажити замовлення. Спробуємо ще раз за 30 секунд.');
+    } finally {
+      setLoading(false);
+    }
+  }, [token, status, deliveryDate, onUnauthorized]);
+
+  // A new filter starts a new baseline, so existing orders are not flagged as new.
+  useEffect(() => {
+    knownIds.current = null;
+    setHighlighted(new Set());
+    setLoading(true);
+    void load();
+    const timer = window.setInterval(() => void load(), POLL_INTERVAL_MS);
+    return () => window.clearInterval(timer);
+  }, [load]);
+
+  const toggleSound = () => {
+    if (soundOn) {
+      setSoundOn(false);
+      void audio.current?.close();
+      audio.current = null;
+      return;
+    }
+    audio.current = new AudioContext();
+    playChime(audio.current);
+    setSoundOn(true);
+  };
+
+  const openOrder = (id: string) => {
+    setOpenOrderId(id);
+    setHighlighted(current => {
+      const next = new Set(current);
+      next.delete(id);
+      return next;
+    });
+  };
+
+  return (
+    <section>
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="font-serif text-2xl sm:text-3xl">Черга замовлень</h1>
+          <p className="mt-1 text-xs text-white/50">
+            {updatedAt ? `Оновлено о ${updatedAt.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit', second: '2-digit' })} · автооновлення кожні 30 с` : 'Завантаження…'}
+          </p>
+        </div>
+        <div className="flex flex-wrap items-end gap-2">
+          <label className="flex flex-col gap-1 text-xs text-white/60">
+            Статус
+            <select value={status} onChange={event => setStatus(event.target.value as OrderStatus | '')}
+              className="rounded-xl border border-[#522149] bg-[#1B0918] px-3 py-2 text-sm text-white outline-none focus:border-[#F5B2E2]">
+              {STATUS_FILTERS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-xs text-white/60">
+            Дата доставки
+            <input type="date" value={deliveryDate} onChange={event => setDeliveryDate(event.target.value)}
+              className="rounded-xl border border-[#522149] bg-[#1B0918] px-3 py-2 text-sm text-white outline-none focus:border-[#F5B2E2]" />
+          </label>
+          <button onClick={() => void load()} className="rounded-xl border border-[#522149] p-2.5 text-white/70 hover:text-white" aria-label="Оновити">
+            <RefreshCw className="h-4 w-4" />
+          </button>
+          <button onClick={toggleSound} aria-pressed={soundOn}
+            className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-sm ${soundOn ? 'border-[#F5B2E2] text-[#F5B2E2]' : 'border-[#522149] text-white/70'}`}>
+            {soundOn ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />} Звук
+          </button>
+        </div>
+      </div>
+
+      {error && <p role="alert" className="mb-4 rounded-xl bg-red-500/10 px-3 py-2 text-sm text-red-200">{error}</p>}
+
+      {loading && orders.length === 0 ? (
+        <div className="flex justify-center py-16 text-white/60"><Loader2 className="h-6 w-6 animate-spin" /></div>
+      ) : orders.length === 0 ? (
+        <p className="rounded-2xl border border-[#481A3F] bg-[#240D20] p-8 text-center text-sm text-white/60">Замовлень за цими умовами немає.</p>
+      ) : (
+        <ul className="space-y-2.5">
+          {orders.map(order => {
+            const isNew = highlighted.has(order.id);
+            return (
+              <li key={order.id}>
+                <button onClick={() => openOrder(order.id)}
+                  className={`grid w-full grid-cols-2 gap-x-4 gap-y-1 rounded-2xl border p-4 text-left text-sm transition-colors hover:border-[#F5B2E2]/60 md:grid-cols-[120px_1fr_1.2fr_110px_150px] md:items-center ${
+                    isNew ? 'border-[#F5B2E2] bg-[#3D1735]' : 'border-[#481A3F] bg-[#240D20]'
+                  }`}>
+                  <span className="whitespace-nowrap font-semibold text-white">
+                    {order.orderNumber}
+                    {isNew && <span className="ml-2 rounded-full bg-[#F5B2E2] px-1.5 py-0.5 text-[10px] font-bold text-[#1E0B1A]">NEW</span>}
+                  </span>
+                  <span className="text-right text-white/70 md:text-left">{order.delivery.recipientName}</span>
+                  <span className="text-white/80">{formatSlot(order.delivery.scheduledFrom, order.delivery.scheduledTo)}</span>
+                  <span className="text-right font-semibold text-[#FFD7F1] md:text-left">{formatUah(order.totalAmount)}</span>
+                  <span className="col-span-2 md:col-span-1 md:text-right">
+                    <span className={`inline-block rounded-full px-2.5 py-1 text-xs ${STATUS_BADGE[order.status] ?? 'bg-[#3D1735] text-[#FFD7F1]'}`}>
+                      {ORDER_STATUS_LABELS[order.status]}
+                    </span>
+                    <span className="ml-2 text-[11px] text-white/40 md:block md:ml-0 md:mt-1">{formatDateTime(order.createdAt)}</span>
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      {openOrderId && (
+        <OrderCardDrawer orderId={openOrderId} token={token} onClose={() => setOpenOrderId(null)}
+          onChanged={() => void load()} onUnauthorized={onUnauthorized} />
+      )}
+    </section>
+  );
+};
+
+/* ---------- One-click availability (US-8.3) ---------- */
+
+const CatalogPanel: React.FC<{ token: string; onUnauthorized: () => void }> = ({ token, onUnauthorized }) => {
+  const [products, setProducts] = useState<CatalogProduct[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [pending, setPending] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    apiRequest<{ items: CatalogProduct[] }>('/catalog/products?page=1&pageSize=100')
+      .then(result => { if (!cancelled) setProducts(result.items); })
+      .catch(() => { if (!cancelled) setMessage('Не вдалося завантажити каталог.'); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
+
+  const toggle = async (product: CatalogProduct) => {
+    setPending(product.id);
+    setMessage(null);
+    try {
+      const result = await adminApi.setAvailability(token, product.id, !product.isAvailable);
+      setProducts(current => current.map(item => (item.id === product.id ? { ...item, isAvailable: result.isAvailable } : item)));
+      if (!product.isAvailable && !result.isAvailable && result.quantityAvailable === 0) {
+        setMessage(`«${product.name}»: залишок 0, тому букет лишається недоступним. Оновіть кількість у картці товару.`);
+      }
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) onUnauthorized();
+      else setMessage('Не вдалося змінити наявність.');
+    } finally {
+      setPending(null);
+    }
+  };
+
+  return (
+    <section>
+      <h1 className="mb-1 font-serif text-2xl sm:text-3xl">Наявність букетів</h1>
+      <p className="mb-5 text-xs text-white/50">Перемикач одразу ховає кнопку «Додати в кошик» на сайті; букет лишається у вітрині з міткою «Немає в наявності».</p>
+      {message && <p role="status" className="mb-4 rounded-xl bg-amber-400/10 px-3 py-2 text-sm text-amber-100">{message}</p>}
+      {loading ? (
+        <div className="flex justify-center py-16 text-white/60"><Loader2 className="h-6 w-6 animate-spin" /></div>
+      ) : (
+        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {products.map(product => (
+            <li key={product.id} className="flex items-center gap-3 rounded-2xl border border-[#481A3F] bg-[#240D20] p-3">
+              {product.imageUrl
+                ? <img src={product.imageUrl} alt="" className="h-14 w-14 shrink-0 rounded-xl object-cover" />
+                : <div className="h-14 w-14 shrink-0 rounded-xl bg-[#1B0918]" />}
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">{product.name}</p>
+                <p className="text-xs text-white/50">{product.sku} · {formatUah(product.price)}</p>
+              </div>
+              <label className="flex cursor-pointer flex-col items-center gap-1 text-[10px] text-white/60">
+                <input type="checkbox" role="switch" className="peer sr-only" checked={product.isAvailable} disabled={pending === product.id}
+                  onChange={() => void toggle(product)} aria-label={`${product.name}: ${product.isAvailable ? 'в наявності' : 'немає в наявності'}`} />
+                <span className="relative h-6 w-11 rounded-full bg-[#4E1E45] transition-colors peer-checked:bg-emerald-500 peer-disabled:opacity-50 after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-5" />
+                {product.isAvailable ? 'Є' : 'Немає'}
+              </label>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 };

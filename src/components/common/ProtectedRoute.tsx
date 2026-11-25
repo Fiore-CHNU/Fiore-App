@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import type { StaffRole } from '../../types/auth';
+import { STAFF_ROLE_LABELS, type StaffRole } from '../../types/auth';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -27,7 +27,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         <div className="max-w-md bg-[#2B1127] border border-[#522149] rounded-2xl p-8 shadow-2xl">
           <h2 className="font-serif text-2xl text-red-400 mb-2">Доступ обмежено</h2>
           <p className="text-sm text-white/70 mb-6">
-            Ваша роль ({user.role === 'admin' ? 'Адміністратор' : 'Менеджер'}) не має доступу до цієї функції.
+            Ваша роль ({STAFF_ROLE_LABELS[user.role]}) не має доступу до цієї функції.
           </p>
           <a
             href="/admin"
