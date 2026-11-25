@@ -7,7 +7,7 @@ import type {
   FacetKind,
 } from '../types/catalog';
 
-const API_BASE_URL = 'http://localhost:5162/api/v1';
+import { API_BASE_URL } from './http';
 
 export const DEFAULT_FACETS: CatalogFacetItem[] = [
   { id: '18e7e69d-c33a-4f99-bd09-83b152e1dbe8', kind: 'occasion', slug: 'wedding', name: 'Весілля' },

@@ -1,18 +1,37 @@
 import React, { useEffect } from 'react';
-import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight, AlertTriangle, Loader2 } from 'lucide-react';
 import { useCart } from '../../hooks/useCart';
+import { formatUah } from '../../services/http';
 
 export const CartDrawer: React.FC = () => {
   const {
     items,
     totalCount,
     totalAmount,
+    deliveryFeeAmount,
+    grandTotalAmount,
+    minimumOrderAmount,
+    meetsMinimumOrder,
+    hasPriceChanges,
+    hasUnavailableItems,
+    isSyncing,
+    error,
+    clearError,
     removeFromCart,
     updateQuantity,
     clearCart,
+    acceptPrices,
     isCartOpen,
     setIsCartOpen,
   } = useCart();
+  const navigate = useNavigate();
+  const canCheckout = items.length > 0 && meetsMinimumOrder && !hasUnavailableItems && !isSyncing;
+
+  const goToCheckout = () => {
+    setIsCartOpen(false);
+    navigate('/checkout');
+  };
 
   // Close on Escape
   useEffect(() => {
@@ -57,6 +76,7 @@ export const CartDrawer: React.FC = () => {
                 {totalCount}
               </span>
             )}
+            {isSyncing && <Loader2 className="w-4 h-4 text-[#F5B2E2]/70 animate-spin" aria-label="Оновлення кошика" />}
           </div>
           <button
             onClick={() => setIsCartOpen(false)}
@@ -66,6 +86,16 @@ export const CartDrawer: React.FC = () => {
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        {error && (
+          <div role="alert" className="mx-5 mt-4 flex items-start gap-2 rounded-xl border border-red-400/40 bg-red-500/10 px-3 py-2.5 text-sm text-red-200">
+            <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+            <span className="flex-1">{error}</span>
+            <button onClick={clearError} className="text-red-200/70 hover:text-red-100" aria-label="Закрити повідомлення">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
 
         {/* Content */}
         {items.length === 0 ? (
@@ -90,14 +120,20 @@ export const CartDrawer: React.FC = () => {
           <>
             {/* Items List */}
             <div className="flex-1 overflow-y-auto p-5 divide-y divide-[#3A1734]">
-              {items.map(({ product, quantity }) => (
+              {items.map(({ product, quantity, priceChanged, acceptedUnitPrice, lineTotal }) => (
                 <div key={product.id} className="py-4 flex gap-3.5 first:pt-0 last:pb-0">
                   {/* Thumbnail */}
-                  <img
-                    src={product.imageUrl || ''}
-                    alt={product.name}
-                    className="w-18 h-20 rounded-xl object-cover bg-[#1E0B1A] border border-[#431A3B] shrink-0"
-                  />
+                  {product.imageUrl ? (
+                    <img
+                      src={product.imageUrl}
+                      alt={product.name}
+                      className="w-18 h-20 rounded-xl object-cover bg-[#1E0B1A] border border-[#431A3B] shrink-0"
+                    />
+                  ) : (
+                    <div className="w-18 h-20 rounded-xl bg-[#1E0B1A] border border-[#431A3B] shrink-0 flex items-center justify-center text-[#F5B2E2]/40">
+                      <ShoppingBag className="w-6 h-6" />
+                    </div>
+                  )}
 
                   {/* Info & Controls */}
                   <div className="flex-1 min-w-0 flex flex-col justify-between">
@@ -117,6 +153,14 @@ export const CartDrawer: React.FC = () => {
                       <p className="text-xs text-[#FFD7F1]/60 font-sans mt-0.5">
                         {product.sku}
                       </p>
+                      {!product.isAvailable && (
+                        <p className="text-xs text-red-300 mt-1">Немає в наявності — видаліть, щоб продовжити</p>
+                      )}
+                      {product.isAvailable && priceChanged && (
+                        <p className="text-xs text-amber-200 mt-1">
+                          Ціна змінилась: {formatUah(acceptedUnitPrice)} → {formatUah(product.price)}
+                        </p>
+                      )}
                     </div>
 
                     <div className="flex items-center justify-between mt-3">
@@ -124,7 +168,8 @@ export const CartDrawer: React.FC = () => {
                       <div className="flex items-center border border-[#522149] rounded-full bg-[#1E0B1A] px-2 py-0.5">
                         <button
                           onClick={() => updateQuantity(product.id, quantity - 1)}
-                          className="p-1 hover:text-[#F5B2E2] transition-colors"
+                          disabled={isSyncing}
+                          className="p-1 hover:text-[#F5B2E2] transition-colors disabled:opacity-40"
                           aria-label="Зменшити кількість"
                         >
                           <Minus className="w-3 h-3" />
@@ -134,7 +179,8 @@ export const CartDrawer: React.FC = () => {
                         </span>
                         <button
                           onClick={() => updateQuantity(product.id, quantity + 1)}
-                          className="p-1 hover:text-[#F5B2E2] transition-colors"
+                          disabled={isSyncing || !product.isAvailable}
+                          className="p-1 hover:text-[#F5B2E2] transition-colors disabled:opacity-40"
                           aria-label="Збільшити кількість"
                         >
                           <Plus className="w-3 h-3" />
@@ -143,7 +189,7 @@ export const CartDrawer: React.FC = () => {
 
                       {/* Total for item */}
                       <span className="font-sans font-bold text-sm text-[#FFD7F1]">
-                        {product.currency}{(product.price * quantity).toLocaleString('uk-UA')}
+                        {formatUah(lineTotal)}
                       </span>
                     </div>
                   </div>
@@ -153,27 +199,50 @@ export const CartDrawer: React.FC = () => {
 
             {/* Footer / Summary */}
             <div className="p-5 border-t border-[#431A3B] bg-[#1E0B1A]/80 backdrop-blur-md">
+              {hasPriceChanges && (
+                <div className="mb-3 rounded-xl border border-amber-300/30 bg-amber-400/10 px-3 py-2.5 text-xs text-amber-100">
+                  <p className="mb-2">Ціни деяких букетів змінилися. Підтвердіть нові ціни, щоб продовжити.</p>
+                  <button
+                    onClick={() => void acceptPrices()}
+                    disabled={isSyncing}
+                    className="rounded-full bg-amber-200 px-3 py-1.5 font-semibold text-[#1E0B1A] hover:bg-amber-100 disabled:opacity-50"
+                  >
+                    Підтвердити нові ціни
+                  </button>
+                </div>
+              )}
               <div className="flex items-center justify-between text-sm text-white/70 mb-1">
-                <span>Кількість товарів:</span>
-                <span className="font-medium text-white">{totalCount} шт.</span>
+                <span>Товари ({totalCount} шт.):</span>
+                <span className="font-medium text-white">{formatUah(totalAmount)}</span>
               </div>
-              <div className="flex items-center justify-between text-base font-semibold text-white mb-4">
-                <span>Разом до сплати:</span>
-                <span className="text-lg font-bold text-[#F5B2E2]">
-                  ₴{totalAmount.toLocaleString('uk-UA')}
+              <div className="flex items-center justify-between text-sm text-white/70 mb-1">
+                <span>Доставка:</span>
+                <span className="font-medium text-white">
+                  {deliveryFeeAmount === 0 && totalAmount > 0 ? 'Безкоштовно' : formatUah(deliveryFeeAmount)}
                 </span>
               </div>
+              <div className="flex items-center justify-between text-base font-semibold text-white mb-3">
+                <span>Разом до сплати:</span>
+                <span className="text-lg font-bold text-[#F5B2E2]">{formatUah(grandTotalAmount)}</span>
+              </div>
+              {!meetsMinimumOrder && (
+                <p className="mb-3 text-xs text-[#FFD7F1]/80">
+                  Мінімальна сума замовлення — {formatUah(minimumOrderAmount)}. Додайте ще букетів на {formatUah(Math.max(0, minimumOrderAmount - totalAmount))}.
+                </p>
+              )}
 
               <div className="flex gap-2.5">
                 <button
-                  onClick={clearCart}
+                  onClick={() => void clearCart()}
+                  disabled={isSyncing}
                   className="px-3 py-2.5 rounded-full border border-[#522149] hover:border-red-400 text-white/60 hover:text-red-400 text-xs font-medium transition-colors"
                 >
                   Очистити
                 </button>
                 <button
-                  onClick={() => alert(`Перехід до оформлення замовлення на суму ₴${totalAmount.toLocaleString('uk-UA')}`)}
-                  className="flex-1 py-3 px-4 rounded-full bg-[#F5B2E2] hover:bg-[#FDBDE9] text-[#1E0B1A] font-semibold text-sm transition-all shadow-md active:scale-95 flex items-center justify-center gap-2"
+                  onClick={goToCheckout}
+                  disabled={!canCheckout}
+                  className="flex-1 py-3 px-4 rounded-full bg-[#F5B2E2] hover:bg-[#FDBDE9] text-[#1E0B1A] font-semibold text-sm transition-all shadow-md active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
                 >
                   <span>Оформити замовлення</span>
                   <ArrowRight className="w-4 h-4" />
