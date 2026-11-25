@@ -128,28 +128,92 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
           {openSections.price ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </button>
 
-        {openSections.price && (
-          <div className="mt-3 space-y-3">
-            <div className="flex items-center gap-2 text-[13px]">
-              <div className="flex-1 bg-white/90 rounded px-2 py-1 text-center font-bold">
-                {filters.minPrice ?? 500} ₴
+        {openSections.price && (() => {
+          const minVal = filters.minPrice ?? 500;
+          const maxVal = filters.maxPrice ?? 3500;
+          const minPercent = Math.round(((minVal - 500) / (3500 - 500)) * 100);
+          const maxPercent = Math.round(((maxVal - 500) / (3500 - 500)) * 100);
+
+          return (
+            <div className="mt-3 space-y-3">
+              <div className="flex items-center gap-2 text-[13px]">
+                <div className="flex-1 flex items-center bg-white/90 rounded px-2 py-1 focus-within:ring-2 focus-within:ring-[#1E0B1A]">
+                  <input
+                    type="number"
+                    min={500}
+                    max={maxVal - 50}
+                    step={50}
+                    value={minVal}
+                    onChange={e => {
+                      const val = Math.max(500, Math.min(Number(e.target.value), maxVal - 50));
+                      onChangeFilters({ ...filters, minPrice: val });
+                    }}
+                    className="w-full bg-transparent text-center font-bold text-[#1E0B1A] focus:outline-none text-[13px]"
+                    aria-label="Мінімальна ціна"
+                  />
+                  <span className="text-[12px] font-bold text-[#1E0B1A] pr-1">₴</span>
+                </div>
+                <span className="font-bold">—</span>
+                <div className="flex-1 flex items-center bg-white/90 rounded px-2 py-1 focus-within:ring-2 focus-within:ring-[#1E0B1A]">
+                  <input
+                    type="number"
+                    min={minVal + 50}
+                    max={3500}
+                    step={50}
+                    value={maxVal}
+                    onChange={e => {
+                      const val = Math.min(3500, Math.max(Number(e.target.value), minVal + 50));
+                      onChangeFilters({ ...filters, maxPrice: val });
+                    }}
+                    className="w-full bg-transparent text-center font-bold text-[#1E0B1A] focus:outline-none text-[13px]"
+                    aria-label="Максимальна ціна"
+                  />
+                  <span className="text-[12px] font-bold text-[#1E0B1A] pr-1">₴</span>
+                </div>
               </div>
-              <span>—</span>
-              <div className="flex-1 bg-white/90 rounded px-2 py-1 text-center font-bold">
-                {filters.maxPrice ?? 3500} ₴
+
+              {/* Dual Range Track */}
+              <div className="relative pt-3 pb-2 flex items-center">
+                <div className="w-full h-1.5 bg-[#1E0B1A]/20 rounded-full" />
+                <div
+                  className="absolute h-1.5 bg-[#1E0B1A] rounded-full pointer-events-none"
+                  style={{
+                    left: `${minPercent}%`,
+                    width: `${Math.max(0, maxPercent - minPercent)}%`,
+                  }}
+                />
+                <input
+                  type="range"
+                  min={500}
+                  max={3500}
+                  step={50}
+                  value={minVal}
+                  onChange={e => {
+                    const value = Math.min(Number(e.target.value), maxVal - 50);
+                    onChangeFilters({ ...filters, minPrice: value });
+                  }}
+                  aria-label="Мінімальна ціна слайдер"
+                  className={`absolute w-full h-1.5 appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-4.5 [&::-webkit-slider-thumb]:h-4.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#1E0B1A] [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-[#F5B2E2] [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-4.5 [&::-moz-range-thumb]:h-4.5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-[#1E0B1A] [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-[#F5B2E2] [&::-moz-range-thumb]:cursor-pointer ${
+                    minVal > 3000 ? 'z-20' : 'z-10'
+                  }`}
+                />
+                <input
+                  type="range"
+                  min={500}
+                  max={3500}
+                  step={50}
+                  value={maxVal}
+                  onChange={e => {
+                    const value = Math.max(Number(e.target.value), minVal + 50);
+                    onChangeFilters({ ...filters, maxPrice: value });
+                  }}
+                  aria-label="Максимальна ціна слайдер"
+                  className="absolute w-full h-1.5 appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-4.5 [&::-webkit-slider-thumb]:h-4.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#1E0B1A] [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-[#F5B2E2] [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-4.5 [&::-moz-range-thumb]:h-4.5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-[#1E0B1A] [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-[#F5B2E2] [&::-moz-range-thumb]:cursor-pointer z-10"
+                />
               </div>
             </div>
-            <input
-              type="range"
-              min="500"
-              max="3500"
-              step="50"
-              value={filters.maxPrice ?? 3500}
-              onChange={e => onChangeFilters({ ...filters, maxPrice: Number(e.target.value) })}
-              className="w-full accent-[#1E0B1A] cursor-pointer"
-            />
-          </div>
-        )}
+          );
+        })()}
       </div>
 
       {/* 3. Flowers Section */}

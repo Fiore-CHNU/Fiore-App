@@ -86,10 +86,14 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
     }
   }, [filters]);
 
-  // Trigger search/filter whenever any filter criterion changes
+  // Trigger search/filter whenever any filter criterion changes (with slight debounce for sliders/inputs)
   useEffect(() => {
-    setPage(1);
-    loadData(1, true);
+    const timer = setTimeout(() => {
+      setPage(1);
+      loadData(1, true);
+    }, 200);
+
+    return () => clearTimeout(timer);
   }, [
     filters.sort,
     filters.minPrice,
@@ -169,6 +173,7 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
           className="w-full md:max-w-xl flex items-center bg-[#FFD7F1] rounded-full overflow-hidden shadow-inner px-2 py-1 transition-all focus-within:ring-2 focus-within:ring-[#F5B2E2]"
         >
           <input
+            id="catalog-search-input"
             type="text"
             value={filters.search}
             onChange={e => {
