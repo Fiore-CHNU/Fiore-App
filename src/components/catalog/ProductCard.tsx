@@ -67,16 +67,16 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         )}
       </div>
 
-      {/* Info & Add to Cart button matching Figma */}
-      <div className="pt-3 px-1 flex items-center justify-between gap-2">
+      {/* Info & Add to Cart button */}
+      <div className="pt-2.5 sm:pt-3 px-0.5 sm:px-1 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div className="min-w-0 flex-1">
           <h3
-            className="font-serif text-[17px] sm:text-[18px] text-white font-medium truncate group-hover:text-[#F5B2E2] transition-colors"
+            className="font-serif text-[15px] sm:text-[18px] text-white font-medium truncate group-hover:text-[#F5B2E2] transition-colors"
             title={product.name}
           >
             {product.name}
           </h3>
-          <p className="text-[14px] sm:text-[15px] font-sans font-bold text-[#FFD7F1] mt-0.5 tracking-wider">
+          <p className="text-[13px] sm:text-[15px] font-sans font-bold text-[#FFD7F1] mt-0.5 tracking-wider">
             {product.currency}{product.price.toLocaleString('uk-UA')}
           </p>
         </div>
@@ -91,7 +91,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               ? `${product.name} немає в наявності`
               : `Додати ${product.name} в кошик${itemQuantity > 0 ? `, у кошику вже ${itemQuantity}` : ''}`
           }
-          className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[12px] sm:text-[13px] font-semibold tracking-wide transition-all duration-200 shadow-md active:scale-95 shrink-0 ${
+          className={`flex items-center justify-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-full text-[12px] sm:text-[13px] font-semibold tracking-wide transition-all duration-200 shadow-md active:scale-95 shrink-0 w-full sm:w-auto ${
             !product.isAvailable
               ? 'bg-[#3D1A35] text-white/40 cursor-not-allowed border border-white/5'
               : isAdded
