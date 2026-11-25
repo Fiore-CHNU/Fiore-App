@@ -377,26 +377,6 @@ export async function fetchSimilarProducts(
     facets?: { kind: string; slug: string }[];
   }
 ): Promise<CatalogProductItem[]> {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000);
-    const res = await fetch(`${API_BASE_URL}/catalog/products/${productId}/similar`, {
-      signal: controller.signal,
-    });
-    clearTimeout(timeoutId);
-    if (res.ok) {
-      const data = (await res.json()) as CatalogProductItem[];
-      if (Array.isArray(data) && data.length > 0) {
-        return data.map(item => ({
-          ...item,
-          currency: item.currency === 'UAH' ? '₴' : item.currency,
-        }));
-      }
-    }
-  } catch {
-    // Backend doesn't have a dedicated /similar endpoint, calculate dynamically via catalog
-  }
-
   const flowerTypeSlug = currentProduct?.facets?.find(
     f => f.kind.toLowerCase() === 'flowertype'
   )?.slug;
