@@ -46,7 +46,7 @@ export const CatalogGrid: React.FC<CatalogGridProps> = ({
 
   return (
     <div className="flex-1 flex flex-col">
-      {/* 3-Column Grid matching Figma */}
+      {/* 3-Column Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-7">
         {products.map(product => (
           <ProductCard
@@ -58,7 +58,7 @@ export const CatalogGrid: React.FC<CatalogGridProps> = ({
         ))}
       </div>
 
-      {/* "Load More" Button matching Figma */}
+      {/* "Load More" Button */}
       {hasMore && (
         <div className="flex justify-center mt-12 mb-4">
           <button
@@ -66,7 +66,7 @@ export const CatalogGrid: React.FC<CatalogGridProps> = ({
             disabled={isLoading}
             className="px-10 py-3 rounded-full bg-[#5C234E] hover:bg-[#722A60] active:scale-95 text-[#FFD7F1] font-semibold text-[14px] tracking-wide transition-all shadow-md disabled:opacity-50"
           >
-            {isLoading ? 'Завантаження...' : 'Load more'}
+            {isLoading ? 'Завантаження...' : 'Показати більше'}
           </button>
         </div>
       )}

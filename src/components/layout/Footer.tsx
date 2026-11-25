@@ -3,7 +3,7 @@ import { Logo } from '../common/Logo';
 
 export const Footer: React.FC = () => {
   return (
-    <footer className="w-full bg-[#421838] text-white border-t border-[#542148] mt-24">
+    <footer id="footer" className="w-full bg-[#421838] text-white border-t border-[#542148] mt-24">
       <div className="max-w-[1440px] mx-auto px-6 sm:px-10 lg:px-16 py-14">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-16 items-start justify-between">
           {/* Left Column: Brand & Contacts */}
@@ -12,15 +12,14 @@ export const Footer: React.FC = () => {
 
             <div className="space-y-2 text-[13px] sm:text-[14px] text-[#FFD7F1]/80 tracking-wider font-sans">
               <p className="font-semibold uppercase text-white/90">
-                15, Placeholder Address
+                м. Чернівці, вул. Головна, 15
               </p>
-              <p>+380 33 33 333</p>
-              <p className="uppercase">example@mail.com</p>
+              <p>+380 50 123 45 67</p>
+              <p className="lowercase">contact@fiore-boutique.ua</p>
             </div>
 
-            {/* Social Icons matching Figma (black background rounded squares) */}
+            {/* Social Icons */}
             <div className="flex items-center gap-3 pt-2">
-              {/* Instagram */}
               <a
                 href="#"
                 aria-label="Instagram"
@@ -31,7 +30,6 @@ export const Footer: React.FC = () => {
                 </svg>
               </a>
 
-              {/* Facebook */}
               <a
                 href="#"
                 aria-label="Facebook"
@@ -42,7 +40,6 @@ export const Footer: React.FC = () => {
                 </svg>
               </a>
 
-              {/* TikTok */}
               <a
                 href="#"
                 aria-label="TikTok"
@@ -58,16 +55,16 @@ export const Footer: React.FC = () => {
           {/* Right Column: Business Hours */}
           <div className="md:text-right space-y-4">
             <h3 className="font-serif text-2xl tracking-widest uppercase font-normal text-[#FFD7F1]">
-              Business Hours
+              Графік роботи
             </h3>
-            <div className="space-y-3 text-[13px] sm:text-[14px] text-white/80 font-sans tracking-wider uppercase">
+            <div className="space-y-3 text-[13px] sm:text-[14px] text-white/80 font-sans tracking-wider">
               <div>
-                <p className="text-white/60">Sunday to Monday</p>
-                <p className="font-semibold text-white">10:00 to 17:00</p>
+                <p className="text-white/60">Понеділок — П'ятниця</p>
+                <p className="font-semibold text-white">09:00 — 20:00</p>
               </div>
               <div>
-                <p className="text-white/60">Thursday to Friday</p>
-                <p className="font-semibold text-white">9:00 to 19:00</p>
+                <p className="text-white/60">Субота — Неділя</p>
+                <p className="font-semibold text-white">10:00 — 18:00</p>
               </div>
             </div>
           </div>

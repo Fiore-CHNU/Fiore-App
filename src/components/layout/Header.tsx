@@ -1,8 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, ShoppingBag, Heart, User, X } from 'lucide-react';
 import { Logo } from '../common/Logo';
-import { INITIAL_PRODUCTS } from '../../services/api';
 import type { CatalogProductItem } from '../../types/catalog';
 import { useCart } from '../../hooks/useCart';
 import { useAuth } from '../../hooks/useAuth';
@@ -20,7 +19,6 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenCart,
   searchQuery,
   onSearchChange,
-  onSelectProduct,
 }) => {
   const { totalCount, setIsCartOpen } = useCart();
   const { user } = useAuth();
@@ -28,43 +26,18 @@ export const Header: React.FC<HeaderProps> = ({
   const handleCartClick = onOpenCart || (() => setIsCartOpen(true));
 
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const searchContainerRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Suggestions filtered by current query
-  const suggestions = searchQuery.trim().length >= 2
-    ? INITIAL_PRODUCTS.filter(p =>
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.sku.toLowerCase().includes(searchQuery.toLowerCase())
-      ).slice(0, 5)
-    : [];
-
-  // Close suggestions when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
-        setShowSuggestions(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const handleOpenSearch = () => {
-    setIsSearchExpanded(true);
-    setTimeout(() => searchInputRef.current?.focus(), 100);
-  };
-
-  const handleClear = () => {
-    onSearchChange('');
-    searchInputRef.current?.focus();
-  };
-
-  const handleSelectSuggestion = (product: CatalogProductItem) => {
-    onSelectProduct?.(product);
-    setShowSuggestions(false);
-    setIsSearchExpanded(false);
+  const handleSearchIconClick = () => {
+    // If desktop, focus the main catalog search input on the page
+    const catalogSearchInput = document.getElementById('catalog-search-input') as HTMLInputElement | null;
+    if (catalogSearchInput) {
+      catalogSearchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => catalogSearchInput.focus(), 300);
+    } else {
+      setIsSearchExpanded(prev => !prev);
+      setTimeout(() => searchInputRef.current?.focus(), 100);
+    }
   };
 
   return (
@@ -73,113 +46,38 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Left: Logo */}
         <Logo />
 
-        {/* Center: Search Bar in top panel (US-1.4.2) matching Figma */}
-        <div ref={searchContainerRef} className="relative flex-1 max-w-md hidden md:block">
-          <div className="relative flex items-center bg-[#FFD7F1] rounded-full overflow-hidden shadow-sm transition-all focus-within:ring-2 focus-within:ring-[#F5B2E2]">
-            <input
-              ref={searchInputRef}
-              type="text"
-              value={searchQuery}
-              onChange={e => {
-                onSearchChange(e.target.value);
-                setShowSuggestions(true);
-              }}
-              onFocus={() => setShowSuggestions(true)}
-              placeholder="Швидкий пошук квітів, букетів..."
-              className="w-full bg-transparent pl-5 pr-16 py-2 text-[#1E0B1A] placeholder-[#1E0B1A]/60 focus:outline-none text-[14px] font-sans font-medium"
-            />
-
-            <div className="absolute right-1 flex items-center gap-1">
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={handleClear}
-                  className="p-1 text-[#1E0B1A]/70 hover:text-[#1E0B1A] transition-colors"
-                  aria-label="Очистити"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-              <div className="w-8 h-8 rounded-full bg-[#4E1E45] flex items-center justify-center text-white">
-                <Search className="w-3.5 h-3.5" />
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Suggestions Dropdown (US-1.4.2) */}
-          {showSuggestions && searchQuery.trim().length >= 2 && (
-            <div className="absolute left-0 right-0 top-full mt-2 bg-[#2B1127] border border-[#522149] rounded-2xl shadow-2xl overflow-hidden z-50 animate-scale-in">
-              <div className="p-2 border-b border-[#3E1838] text-[11px] uppercase tracking-wider text-[#FFD7F1]/70 font-semibold px-3">
-                Результати швидкого пошуку ({suggestions.length})
-              </div>
-
-              {suggestions.length > 0 ? (
-                <div className="divide-y divide-[#3A1734]">
-                  {suggestions.map(item => (
-                    <div
-                      key={item.id}
-                      onClick={() => handleSelectSuggestion(item)}
-                      className="flex items-center gap-3 p-2.5 hover:bg-[#3D1A37] cursor-pointer transition-colors"
-                    >
-                      <img
-                        src={item.imageUrl || ''}
-                        alt={item.name}
-                        className="w-10 h-10 rounded-lg object-cover bg-[#1E0B1A]"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[14px] font-medium text-white truncate font-serif">
-                          {item.name}
-                        </p>
-                        <p className="text-[12px] text-[#FFD7F1] font-bold">
-                          {item.currency}{item.price.toLocaleString('uk-UA')}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="p-4 text-center text-sm text-[#FFD7F1]/60">
-                  Букетів за запитом "{searchQuery}" не знайдено
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Center-Right: Navigation */}
-        <nav className="hidden lg:flex items-center gap-7 text-[15px] font-sans tracking-wide">
+        {/* Center: Navigation matching Figma */}
+        <nav className="hidden md:flex items-center gap-8 text-[15px] font-sans tracking-wide">
+          <Link
+            to="/"
+            className="text-[#F5B2E2] font-semibold border-b-2 border-[#F5B2E2] pb-0.5 transition-colors"
+          >
+            Каталог
+          </Link>
           <a
-            href="#"
+            href="#footer"
             className="text-white/80 hover:text-[#F5B2E2] transition-colors font-medium"
           >
-            Home
-          </a>
-          <a
-            href="#"
-            className="text-[#F5B2E2] font-semibold border-b-2 border-[#F5B2E2] pb-0.5"
-          >
-            Catalog
-          </a>
-          <a
-            href="#"
-            className="text-white/80 hover:text-[#F5B2E2] transition-colors font-medium"
-          >
-            Contact Us
+            Контакти
           </a>
         </nav>
 
         {/* Right: Actions */}
         <div className="flex items-center gap-4 sm:gap-6 text-white">
-          {/* Mobile Search Toggle */}
+          {/* Search Icon button (focuses catalog search or opens mobile bar) */}
           <button
-            onClick={handleOpenSearch}
+            type="button"
+            onClick={handleSearchIconClick}
             aria-label="Пошук"
-            className="p-1 md:hidden hover:text-[#F5B2E2] transition-transform active:scale-95"
+            title="Знайти букет"
+            className="p-1 hover:text-[#F5B2E2] transition-transform active:scale-95"
           >
-            <Search className="w-5 h-5" strokeWidth={1.8} />
+            <Search className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={1.8} />
           </button>
 
+          {/* Cart Icon */}
           <button
+            type="button"
             onClick={handleCartClick}
             aria-label={cartItemCount > 0 ? `Кошик, ${cartItemCount} товарів` : 'Кошик'}
             className="p-1 hover:text-[#F5B2E2] transition-transform active:scale-95 relative"
@@ -192,14 +90,16 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </button>
 
+          {/* Wishlist Icon */}
           <button
+            type="button"
             aria-label="Улюблене"
             className="p-1 hover:text-[#F5B2E2] transition-transform active:scale-95 hidden sm:block"
           >
             <Heart className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={1.8} />
           </button>
 
-          {/* Staff Login / Admin Entry (US-7.1) */}
+          {/* Staff Login / Admin Entry */}
           <Link
             to={user ? "/admin" : "/admin/login"}
             aria-label={user ? `Кабінет (${user.role})` : "Вхід до адмін-панелі"}
@@ -214,7 +114,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Mobile Expandable Search Bar */}
+      {/* Mobile Expandable Search Bar (when toggled on mobile) */}
       {isSearchExpanded && (
         <div className="md:hidden px-4 pb-4 pt-1 bg-[#1E0B1A] border-t border-[#36132F] animate-fade-in">
           <div className="relative flex items-center bg-[#FFD7F1] rounded-full overflow-hidden shadow-sm">

@@ -8,6 +8,9 @@ export interface CatalogProductItem {
   currency: string;
   imageUrl: string | null;
   isAvailable: boolean;
+  occasions?: string[];
+  flowerTypes?: string[];
+  colors?: string[];
 }
 
 export interface PaginationMetadata {
@@ -36,9 +39,18 @@ export interface ProductComposition {
   sortOrder: number;
 }
 
+export type FacetKind = 'occasion' | 'flowerType' | 'color' | 'Occasion' | 'FlowerType' | 'Color';
+
 export interface ProductFacet {
   id: string;
-  kind: 'Occasion' | 'FlowerType' | 'Color';
+  kind: FacetKind;
+  slug: string;
+  name: string;
+}
+
+export interface CatalogFacetItem {
+  id: string;
+  kind: FacetKind;
   slug: string;
   name: string;
 }
