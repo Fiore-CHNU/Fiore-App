@@ -55,7 +55,7 @@ export const SortSelector: React.FC<SortSelectorProps> = ({
 
   return (
     <div ref={containerRef} className="relative z-30 select-none">
-      {/* Trigger Button matching Figma "Sort By =" */}
+      {/* Trigger Button */}
       <button
         type="button"
         onClick={() => setIsOpen(prev => !prev)}
@@ -68,13 +68,13 @@ export const SortSelector: React.FC<SortSelectorProps> = ({
         }`}
       >
         <SlidersHorizontal className="w-4 h-4 text-[#F5B2E2]" strokeWidth={2} />
-        <span className="font-semibold">Sort By</span>
+        <span className="font-semibold">Сортування</span>
         <span className="text-[#F5B2E2] font-normal hidden sm:inline">
           : {currentOption.label}
         </span>
       </button>
 
-      {/* Dropdown Menu matching Figma theme */}
+      {/* Dropdown Menu */}
       {isOpen && (
         <div
           role="listbox"

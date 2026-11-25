@@ -73,7 +73,7 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Left: Logo */}
         <Logo />
 
-        {/* Center: Search Bar in top panel (US-1.4.2) matching Figma */}
+        {/* Center: Search Bar in top panel */}
         <div ref={searchContainerRef} className="relative flex-1 max-w-md hidden md:block">
           <div className="relative flex items-center bg-[#FFD7F1] rounded-full overflow-hidden shadow-sm transition-all focus-within:ring-2 focus-within:ring-[#F5B2E2]">
             <input
@@ -106,7 +106,7 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           </div>
 
-          {/* Quick Suggestions Dropdown (US-1.4.2) */}
+          {/* Quick Suggestions Dropdown */}
           {showSuggestions && searchQuery.trim().length >= 2 && (
             <div className="absolute left-0 right-0 top-full mt-2 bg-[#2B1127] border border-[#522149] rounded-2xl shadow-2xl overflow-hidden z-50 animate-scale-in">
               <div className="p-2 border-b border-[#3E1838] text-[11px] uppercase tracking-wider text-[#FFD7F1]/70 font-semibold px-3">
@@ -148,23 +148,17 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Center-Right: Navigation */}
         <nav className="hidden lg:flex items-center gap-7 text-[15px] font-sans tracking-wide">
-          <a
-            href="#"
-            className="text-white/80 hover:text-[#F5B2E2] transition-colors font-medium"
-          >
-            Home
-          </a>
-          <a
-            href="#"
+          <Link
+            to="/"
             className="text-[#F5B2E2] font-semibold border-b-2 border-[#F5B2E2] pb-0.5"
           >
-            Catalog
-          </a>
+            Каталог
+          </Link>
           <a
-            href="#"
+            href="#footer"
             className="text-white/80 hover:text-[#F5B2E2] transition-colors font-medium"
           >
-            Contact Us
+            Контакти
           </a>
         </nav>
 
@@ -199,7 +193,7 @@ export const Header: React.FC<HeaderProps> = ({
             <Heart className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={1.8} />
           </button>
 
-          {/* Staff Login / Admin Entry (US-7.1) */}
+          {/* Staff Login / Admin Entry */}
           <Link
             to={user ? "/admin" : "/admin/login"}
             aria-label={user ? `Кабінет (${user.role})` : "Вхід до адмін-панелі"}

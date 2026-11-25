@@ -1,8 +1,30 @@
-import type { CatalogProductItem, ListProductsResponse, ProductDetailsResponse, CatalogSort } from '../types/catalog';
+import type {
+  CatalogProductItem,
+  ListProductsResponse,
+  ProductDetailsResponse,
+  CatalogSort,
+  CatalogFacetItem,
+  FacetKind,
+} from '../types/catalog';
 
 const API_BASE_URL = 'http://localhost:5162/api/v1';
 
-// Mock data matching the Figma mockups (Catalog-1.png & card.png)
+export const DEFAULT_FACETS: CatalogFacetItem[] = [
+  { id: '18e7e69d-c33a-4f99-bd09-83b152e1dbe8', kind: 'occasion', slug: 'wedding', name: 'Весілля' },
+  { id: 'c6163af5-9350-44df-a029-0cabef0c5344', kind: 'occasion', slug: 'birthday', name: 'День народження' },
+  { id: 'ebc63a89-dacc-430c-a481-79325bba9c80', kind: 'occasion', slug: 'gratitude', name: 'Подяка' },
+  { id: 'ea59d8ec-4fd8-420b-8c34-2ee632305743', kind: 'occasion', slug: 'romantic', name: 'Романтика' },
+  { id: '6ebe5034-c29e-46d0-b5c6-c4e38f5183e7', kind: 'flowerType', slug: 'hydrangeas', name: 'Гортензії' },
+  { id: '7cb1301e-8830-4b87-bd7e-4d8a01811188', kind: 'flowerType', slug: 'peonies', name: 'Півонії' },
+  { id: '80e850d1-f250-48ea-be4d-c3fd8bb8abf4', kind: 'flowerType', slug: 'roses', name: 'Троянди' },
+  { id: 'cfe49105-8ab4-49e5-aa49-4cdf940bebf1', kind: 'flowerType', slug: 'tulips', name: 'Тюльпани' },
+  { id: 'f49f3570-5779-432b-8548-f62366503902', kind: 'color', slug: 'white', name: 'Білий' },
+  { id: '237cf781-1b3c-46a9-b2e6-fcbed4eb33f9', kind: 'color', slug: 'pastel', name: 'Пастельний' },
+  { id: '910d9311-2b74-4999-85d4-f597d74c914f', kind: 'color', slug: 'pink', name: 'Рожевий' },
+  { id: '1f3088d2-55de-472f-9bf2-21ae7b945822', kind: 'color', slug: 'red', name: 'Червоний' },
+];
+
+// Mock data matching the Figma mockups with Ukrainian attributes for local fallback
 export const INITIAL_PRODUCTS: CatalogProductItem[] = [
   {
     id: 'b1e0f001-0000-0000-0000-000000000001',
@@ -12,6 +34,9 @@ export const INITIAL_PRODUCTS: CatalogProductItem[] = [
     currency: '₴',
     imageUrl: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=800&q=80',
     isAvailable: true,
+    occasions: ['romantic', 'wedding'],
+    flowerTypes: ['roses'],
+    colors: ['red'],
   },
   {
     id: 'b1e0f002-0000-0000-0000-000000000002',
@@ -21,6 +46,9 @@ export const INITIAL_PRODUCTS: CatalogProductItem[] = [
     currency: '₴',
     imageUrl: 'https://images.unsplash.com/photo-1561181286-d3fee7d55364?auto=format&fit=crop&w=800&q=80',
     isAvailable: true,
+    occasions: ['birthday', 'gratitude'],
+    flowerTypes: ['peonies'],
+    colors: ['pink'],
   },
   {
     id: 'b1e0f003-0000-0000-0000-000000000003',
@@ -30,6 +58,9 @@ export const INITIAL_PRODUCTS: CatalogProductItem[] = [
     currency: '₴',
     imageUrl: 'https://images.unsplash.com/photo-1526047932273-341f2a7631f9?auto=format&fit=crop&w=800&q=80',
     isAvailable: true,
+    occasions: ['romantic'],
+    flowerTypes: ['roses'],
+    colors: ['red'],
   },
   {
     id: 'b1e0f004-0000-0000-0000-000000000004',
@@ -39,6 +70,9 @@ export const INITIAL_PRODUCTS: CatalogProductItem[] = [
     currency: '₴',
     imageUrl: 'https://images.unsplash.com/photo-1508610048659-a06b669e3321?auto=format&fit=crop&w=800&q=80',
     isAvailable: true,
+    occasions: ['wedding'],
+    flowerTypes: ['hydrangeas'],
+    colors: ['white'],
   },
   {
     id: 'b1e0f005-0000-0000-0000-000000000005',
@@ -48,6 +82,9 @@ export const INITIAL_PRODUCTS: CatalogProductItem[] = [
     currency: '₴',
     imageUrl: 'https://images.unsplash.com/photo-1582794543139-8ac9cb0f7b11?auto=format&fit=crop&w=800&q=80',
     isAvailable: true,
+    occasions: ['romantic', 'birthday'],
+    flowerTypes: ['peonies'],
+    colors: ['pastel'],
   },
   {
     id: 'b1e0f006-0000-0000-0000-000000000006',
@@ -57,6 +94,9 @@ export const INITIAL_PRODUCTS: CatalogProductItem[] = [
     currency: '₴',
     imageUrl: 'https://images.unsplash.com/photo-1562690868-60bbe7293e94?auto=format&fit=crop&w=800&q=80',
     isAvailable: true,
+    occasions: ['birthday', 'gratitude'],
+    flowerTypes: ['peonies'],
+    colors: ['pink'],
   },
   {
     id: 'b1e0f007-0000-0000-0000-000000000007',
@@ -66,6 +106,9 @@ export const INITIAL_PRODUCTS: CatalogProductItem[] = [
     currency: '₴',
     imageUrl: 'https://images.unsplash.com/photo-1589244159943-460088ed5c92?auto=format&fit=crop&w=800&q=80',
     isAvailable: true,
+    occasions: ['gratitude'],
+    flowerTypes: ['hydrangeas'],
+    colors: ['pastel'],
   },
   {
     id: 'b1e0f008-0000-0000-0000-000000000008',
@@ -75,6 +118,9 @@ export const INITIAL_PRODUCTS: CatalogProductItem[] = [
     currency: '₴',
     imageUrl: 'https://images.unsplash.com/photo-1591886960571-74d43a9d4166?auto=format&fit=crop&w=800&q=80',
     isAvailable: true,
+    occasions: ['birthday'],
+    flowerTypes: ['tulips'],
+    colors: ['pastel'],
   },
   {
     id: 'b1e0f009-0000-0000-0000-000000000009',
@@ -84,6 +130,9 @@ export const INITIAL_PRODUCTS: CatalogProductItem[] = [
     currency: '₴',
     imageUrl: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=800&q=80',
     isAvailable: true,
+    occasions: ['romantic'],
+    flowerTypes: ['roses'],
+    colors: ['red'],
   },
   {
     id: 'b1e0f010-0000-0000-0000-000000000010',
@@ -93,6 +142,9 @@ export const INITIAL_PRODUCTS: CatalogProductItem[] = [
     currency: '₴',
     imageUrl: 'https://images.unsplash.com/photo-1507290439931-a861b5a38200?auto=format&fit=crop&w=800&q=80',
     isAvailable: true,
+    occasions: ['wedding', 'birthday'],
+    flowerTypes: ['roses', 'tulips'],
+    colors: ['white', 'pink'],
   },
   {
     id: 'b1e0f011-0000-0000-0000-000000000011',
@@ -102,6 +154,9 @@ export const INITIAL_PRODUCTS: CatalogProductItem[] = [
     currency: '₴',
     imageUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80',
     isAvailable: true,
+    occasions: ['romantic', 'gratitude'],
+    flowerTypes: ['roses'],
+    colors: ['red'],
   },
   {
     id: 'b1e0f012-0000-0000-0000-000000000012',
@@ -111,8 +166,40 @@ export const INITIAL_PRODUCTS: CatalogProductItem[] = [
     currency: '₴',
     imageUrl: 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=800&q=80',
     isAvailable: true,
+    occasions: ['gratitude'],
+    flowerTypes: ['hydrangeas'],
+    colors: ['white'],
   },
 ];
+
+export async function fetchCatalogFacets(kind?: FacetKind): Promise<CatalogFacetItem[]> {
+  try {
+    const url = kind
+      ? `${API_BASE_URL}/catalog/facets?kind=${kind}`
+      : `${API_BASE_URL}/catalog/facets`;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2500);
+
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeoutId);
+
+    if (res.ok) {
+      const data = (await res.json()) as CatalogFacetItem[];
+      if (Array.isArray(data) && data.length > 0) {
+        return data;
+      }
+    }
+  } catch {
+    // Graceful fallback to default facets
+  }
+
+  if (kind) {
+    const k = kind.toLowerCase();
+    return DEFAULT_FACETS.filter(f => f.kind.toLowerCase() === k);
+  }
+  return DEFAULT_FACETS;
+}
 
 export async function fetchCatalogProducts(params: {
   page?: number;
@@ -125,6 +212,9 @@ export async function fetchCatalogProducts(params: {
   occasion?: string;
   flowerType?: string;
   color?: string;
+  occasions?: string[];
+  flowerTypes?: string[];
+  colors?: string[];
 }): Promise<ListProductsResponse> {
   const page = params.page ?? 1;
   const pageSize = params.pageSize ?? 12;
@@ -135,6 +225,10 @@ export async function fetchCatalogProducts(params: {
     priceDescending: 'PriceDescending',
   };
 
+  const selectedOccasion = params.occasion || params.occasions?.[0];
+  const selectedFlowerType = params.flowerType || params.flowerTypes?.[0];
+  const selectedColor = params.color || params.colors?.[0];
+
   try {
     const query = new URLSearchParams();
     query.set('Page', page.toString());
@@ -144,12 +238,12 @@ export async function fetchCatalogProducts(params: {
     if (params.minPrice !== undefined) query.set('MinPrice', params.minPrice.toString());
     if (params.maxPrice !== undefined) query.set('MaxPrice', params.maxPrice.toString());
     if (params.inStockOnly) query.set('InStockOnly', 'true');
-    if (params.occasion) query.set('Occasion', params.occasion);
-    if (params.flowerType) query.set('FlowerType', params.flowerType);
-    if (params.color) query.set('Color', params.color);
+    if (selectedOccasion) query.set('Occasion', selectedOccasion);
+    if (selectedFlowerType) query.set('FlowerType', selectedFlowerType);
+    if (selectedColor) query.set('Color', selectedColor);
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const timeoutId = setTimeout(() => controller.abort(), 2500);
 
     const res = await fetch(`${API_BASE_URL}/catalog/products?${query.toString()}`, {
       signal: controller.signal,
@@ -158,9 +252,14 @@ export async function fetchCatalogProducts(params: {
 
     if (res.ok) {
       const data = (await res.json()) as ListProductsResponse;
-      if (data.items && data.items.length > 0) {
-        return data;
-      }
+      // If the backend answered with 200 OK, respect its result (even if items is empty)
+      return {
+        items: data.items.map(item => ({
+          ...item,
+          currency: item.currency === 'UAH' ? '₴' : item.currency,
+        })),
+        pagination: data.pagination,
+      };
     }
   } catch {
     // Graceful fallback to client-side filtering matching backend behavior
@@ -181,6 +280,21 @@ export async function fetchCatalogProducts(params: {
   }
   if (params.inStockOnly) {
     filtered = filtered.filter(p => p.isAvailable);
+  }
+  if (params.occasions && params.occasions.length > 0) {
+    filtered = filtered.filter(p =>
+      p.occasions && params.occasions!.some(occ => p.occasions!.includes(occ))
+    );
+  }
+  if (params.flowerTypes && params.flowerTypes.length > 0) {
+    filtered = filtered.filter(p =>
+      p.flowerTypes && params.flowerTypes!.some(fl => p.flowerTypes!.includes(fl))
+    );
+  }
+  if (params.colors && params.colors.length > 0) {
+    filtered = filtered.filter(p =>
+      p.colors && params.colors!.some(col => p.colors!.includes(col))
+    );
   }
 
   // Sorting
@@ -209,13 +323,17 @@ export async function fetchCatalogProducts(params: {
 export async function fetchProductDetails(id: string): Promise<ProductDetailsResponse | null> {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const timeoutId = setTimeout(() => controller.abort(), 2500);
     const res = await fetch(`${API_BASE_URL}/catalog/products/${id}`, {
       signal: controller.signal,
     });
     clearTimeout(timeoutId);
     if (res.ok) {
-      return (await res.json()) as ProductDetailsResponse;
+      const data = (await res.json()) as ProductDetailsResponse;
+      return {
+        ...data,
+        currency: data.currency === 'UAH' ? '₴' : data.currency,
+      };
     }
   } catch {
     // fallback
@@ -244,9 +362,9 @@ export async function fetchProductDetails(id: string): Promise<ProductDetailsRes
       { flowerName: 'Евкаліпт', stemCount: 5, note: 'Cinerea', sortOrder: 4 },
     ],
     facets: [
-      { id: 'f-1', kind: 'Occasion', slug: 'birthday', name: 'День народження' },
-      { id: 'f-2', kind: 'FlowerType', slug: 'roses', name: 'Троянди' },
-      { id: 'f-3', kind: 'Color', slug: 'plum', name: 'Бордовий' },
+      { id: 'f-1', kind: 'occasion', slug: 'birthday', name: 'День народження' },
+      { id: 'f-2', kind: 'flowerType', slug: 'roses', name: 'Троянди' },
+      { id: 'f-3', kind: 'color', slug: 'red', name: 'Червоний' },
     ],
     packaging: 'Преміальний матовий папір, дизайнерська атласна стрічка та захисний аквабокс для збереження свіжості',
   };
@@ -255,13 +373,17 @@ export async function fetchProductDetails(id: string): Promise<ProductDetailsRes
 export async function fetchSimilarProducts(productId: string): Promise<CatalogProductItem[]> {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const timeoutId = setTimeout(() => controller.abort(), 2500);
     const res = await fetch(`${API_BASE_URL}/catalog/products/${productId}/similar`, {
       signal: controller.signal,
     });
     clearTimeout(timeoutId);
     if (res.ok) {
-      return (await res.json()) as CatalogProductItem[];
+      const data = (await res.json()) as CatalogProductItem[];
+      return data.map(item => ({
+        ...item,
+        currency: item.currency === 'UAH' ? '₴' : item.currency,
+      }));
     }
   } catch {
     // fallback to smart mock matching
@@ -270,11 +392,9 @@ export async function fetchSimilarProducts(productId: string): Promise<CatalogPr
   const current = INITIAL_PRODUCTS.find(p => p.id === productId);
   const targetPrice = current ? current.price : 1800;
 
-  // Filter out current product, sort by price closeness and availability
   return [...INITIAL_PRODUCTS]
     .filter(p => p.id !== productId)
     .sort((a, b) => {
-      // Prioritize available products
       if (a.isAvailable !== b.isAvailable) {
         return a.isAvailable ? -1 : 1;
       }

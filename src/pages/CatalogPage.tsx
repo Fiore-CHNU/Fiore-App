@@ -3,8 +3,8 @@ import { Search, X, Filter } from 'lucide-react';
 import { FilterSidebar } from '../components/catalog/FilterSidebar';
 import { CatalogGrid } from '../components/catalog/CatalogGrid';
 import { SortSelector } from '../components/catalog/SortSelector';
-import type { CatalogProductItem, FilterState, CatalogSort } from '../types/catalog';
-import { fetchCatalogProducts } from '../services/api';
+import type { CatalogProductItem, FilterState, CatalogSort, CatalogFacetItem } from '../types/catalog';
+import { fetchCatalogProducts, fetchCatalogFacets, DEFAULT_FACETS } from '../services/api';
 
 interface CatalogPageProps {
   searchQuery: string;
@@ -20,6 +20,7 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
   onSelectProduct,
 }) => {
   const [products, setProducts] = useState<CatalogProductItem[]>([]);
+  const [facets, setFacets] = useState<CatalogFacetItem[]>(DEFAULT_FACETS);
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -36,6 +37,23 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
     colors: [],
   });
 
+  // Load facets from backend on mount
+  useEffect(() => {
+    let isMounted = true;
+    fetchCatalogFacets()
+      .then(data => {
+        if (isMounted && data && data.length > 0) {
+          setFacets(data);
+        }
+      })
+      .catch(() => {
+        // Keeps DEFAULT_FACETS
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   // Sync internal search when top header search changes
   useEffect(() => {
     setFilters(prev => ({ ...prev, search: searchQuery }));
@@ -51,6 +69,10 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
         sort: filters.sort,
         minPrice: filters.minPrice,
         maxPrice: filters.maxPrice,
+        inStockOnly: filters.inStockOnly,
+        occasions: filters.occasions,
+        flowerTypes: filters.flowerTypes,
+        colors: filters.colors,
       });
 
       if (isNewSearch) {
@@ -64,10 +86,21 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
     }
   }, [filters]);
 
+  // Trigger search/filter whenever any filter criterion changes
   useEffect(() => {
     setPage(1);
     loadData(1, true);
-  }, [filters.sort, filters.minPrice, filters.maxPrice, filters.search, loadData]);
+  }, [
+    filters.sort,
+    filters.minPrice,
+    filters.maxPrice,
+    filters.search,
+    filters.occasions,
+    filters.flowerTypes,
+    filters.colors,
+    filters.inStockOnly,
+    loadData,
+  ]);
 
   // Lock body scroll and listen for Escape when mobile filter drawer is open
   useEffect(() => {
@@ -92,7 +125,7 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
     filters.occasions.length +
     filters.flowerTypes.length +
     filters.colors.length +
-    (filters.minPrice !== undefined || filters.maxPrice !== undefined ? 1 : 0);
+    (filters.minPrice !== undefined || (filters.maxPrice !== undefined && filters.maxPrice < 3500) ? 1 : 0);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,9 +161,9 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
 
   return (
     <main className="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 py-8">
-      {/* Top Bar: Search and Sort By matching Figma */}
+      {/* Top Bar: Search and Sort By */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
-        {/* Search Bar pill matching Figma */}
+        {/* Search Bar pill */}
         <form
           onSubmit={handleSearchSubmit}
           className="w-full md:max-w-xl flex items-center bg-[#FFD7F1] rounded-full overflow-hidden shadow-inner px-2 py-1 transition-all focus-within:ring-2 focus-within:ring-[#F5B2E2]"
@@ -155,6 +188,7 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
                 onSearchChange('');
               }}
               className="p-1 mr-1 text-[#1E0B1A]/60 hover:text-[#1E0B1A]"
+              title="Очистити"
             >
               <X className="w-4 h-4" />
             </button>
@@ -177,7 +211,7 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
             className="lg:hidden flex items-center gap-2 px-4 py-2 rounded-full bg-[#2E1229] border border-[#522149] text-white/90 hover:text-white hover:border-[#F5B2E2]/60 hover:bg-[#3D1A37] transition-all text-[13px] font-sans font-medium tracking-wide"
           >
             <Filter className="w-4 h-4 text-[#F5B2E2]" strokeWidth={2} />
-            <span>Filtration</span>
+            <span>Фільтри</span>
             {activeFiltersCount > 0 && (
               <span className="bg-[#F5B2E2] text-[#1E0B1A] text-[11px] font-bold px-1.5 py-0.5 rounded-full leading-none">
                 {activeFiltersCount}
@@ -202,6 +236,7 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
               onSearchChange('');
             }}
             className="ml-2 hover:text-white"
+            title="Скинути пошук"
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -213,6 +248,7 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
         <div className="hidden lg:block shrink-0">
           <FilterSidebar
             filters={filters}
+            facets={facets}
             onChangeFilters={setFilters}
             onReset={handleResetFilters}
             onApply={() => loadData(1, true)}
@@ -239,6 +275,7 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
           <div className="relative w-full max-w-[320px] h-full bg-[#3A1633] border-r border-[#522149] overflow-y-auto z-10 shadow-2xl">
             <FilterSidebar
               filters={filters}
+              facets={facets}
               onChangeFilters={setFilters}
               onReset={() => {
                 handleResetFilters();
