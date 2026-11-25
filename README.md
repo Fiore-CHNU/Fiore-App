@@ -28,6 +28,8 @@ npm run dev
 ```
 Додаток буде доступний за адресою `http://localhost:5173`.
 
+Адреса API задається змінною `VITE_API_BASE_URL` (приклад у `.env.example`, за замовчуванням `http://localhost:5162/api/v1`). Для кошика, оформлення й оплати потрібен запущений бекенд `Fiore-CHNU/Fiore`.
+
 ### Перевірка типів та Production-збірка
 ```bash
 npm run build
@@ -51,9 +53,10 @@ npm run lint
 | **EAN-363** | **US-3.1.2** Frontend: Кнопка «Додати в кошик», лічильник | `main` |  **Done** |
 | **EAN-355 / EAN-357** | **US-2.2.2** Frontend: Блок опису, габарити та схожі букети | `feature/EAN-357-product-description-similar` |  **Done** |
 | **EAN-426 / EAN-428** | **US-7.1.2** Frontend: Сторінка входу до адмін-панелі, вихід, захист ролей | `feature/EAN-428-admin-login` |  **Done** |
-| **EAN-364** | **US-3.2.2** Frontend: Сторінка кошика, редагування кількості | `feature/EAN-364-cart-page` | ⏳ **Next / To Do** |
-| **US-4.1 – 4.5** | Frontend: Оформлення замовлення (Checkout, валідація, ліміт 500 грн) | — | ⏳ **Backlog** |
-| **US-5.1** | Frontend & Integration: Онлайн-оплата (LiqPay / WayForPay) | — | ⏳ **Backlog** |
+| **EAN-368** | **US-3.2.2** Frontend: Кошик через API (`X-Cart-Token`), доставка, мінімальна сума | `feature/checkout-flow` | ✅ **Done** |
+| **EAN-374/379/384/389/394** | **US-4.1 – 4.5** Frontend: Оформлення замовлення, слоти, листівка, конфлікти цін і наявності | `feature/checkout-flow` | ✅ **Done** |
+| **EAN-400/405/411** | **US-5.1/5.2/6.2** Frontend: Оплата (sandbox), «Дякуємо», «Час на оплату вичерпано», статус за посиланням | `feature/checkout-flow` | ✅ **Done** |
+| **US-5.1** | Integration: Реальний платіжний провайдер (LiqPay / WayForPay) | — | ⏳ **Очікує рішення команди** |
 
 ---
 
