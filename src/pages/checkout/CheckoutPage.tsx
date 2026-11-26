@@ -8,6 +8,7 @@ import type { CheckoutConflictItem, DeliverySlot } from '../../types/order';
 import { FormField, Section } from '../../components/checkout/FormField';
 import { inputClassName } from '../../components/checkout/formStyles';
 import { DeliverySlotPicker } from '../../components/checkout/DeliverySlotPicker';
+import { GreetingCardSection } from '../../components/checkout/GreetingCardSection';
 
 /** Delivery is only within the city (US-4.2); must match the backend `Delivery:ServiceCities`. */
 const SERVICE_CITY = 'Чернівці';
@@ -243,8 +244,6 @@ export const CheckoutPage: React.FC = () => {
     );
   }
 
-  const cardLength = form.cardMessage.length;
-
   return (
     <main className="mx-auto max-w-[1200px] px-4 py-8 sm:px-8 lg:py-12">
       <Link to="/" className="mb-6 inline-flex items-center gap-2 text-sm text-white/60 hover:text-[#F5B2E2]">
@@ -347,20 +346,13 @@ export const CheckoutPage: React.FC = () => {
           </Section>
 
           <Section step={4} title="Листівка">
-            <label className="flex cursor-pointer items-center gap-2.5 text-sm text-white/80">
-              <input type="checkbox" className="h-4 w-4 accent-[#F5B2E2]" checked={form.withCard}
-                onChange={e => update('withCard', e.target.checked)} />
-              Додати безкоштовну листівку з привітанням
-            </label>
-            {form.withCard && (
-              <div className="mt-4">
-                <FormField id="cardMessage" label="Текст листівки" error={errors.cardMessage}
-                  hint={<span className={cardLength >= CARD_LIMIT ? 'text-[#F5B2E2]' : ''}>{cardLength}/{CARD_LIMIT}</span>}>
-                  <textarea className={`${inputClassName(Boolean(errors.cardMessage))} min-h-28 resize-y`} maxLength={CARD_LIMIT}
-                    value={form.cardMessage} onChange={e => update('cardMessage', e.target.value.slice(0, CARD_LIMIT))} />
-                </FormField>
-              </div>
-            )}
+            <GreetingCardSection
+              withCard={form.withCard}
+              onWithCardChange={checked => update('withCard', checked)}
+              cardMessage={form.cardMessage}
+              onCardMessageChange={msg => update('cardMessage', msg)}
+              error={errors.cardMessage}
+            />
           </Section>
         </div>
 
