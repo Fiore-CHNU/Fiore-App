@@ -2,8 +2,8 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Bell, BellOff, ClipboardList, Flower2, Loader2, LogOut, RefreshCw, Shield, Store, User } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
-import { ApiError, apiRequest, formatDateTime, formatSlot, formatUah } from '../../services/http';
-import { adminApi, type AdminOrderListItem } from '../../services/adminApi';
+import { ApiError, formatDateTime, formatSlot, formatUah } from '../../services/http';
+import { adminApi, type AdminOrderListItem, type AdminProduct } from '../../services/adminApi';
 import { ORDER_STATUS_LABELS, type OrderStatus } from '../../types/order';
 import { STAFF_ROLE_LABELS } from '../../types/auth';
 import { OrderCardDrawer } from './OrderCardDrawer';
@@ -41,15 +41,6 @@ const playChime = (context: AudioContext) => {
   oscillator.start();
   oscillator.stop(context.currentTime + 0.6);
 };
-
-interface CatalogProduct {
-  id: string;
-  sku: string;
-  name: string;
-  price: number;
-  imageUrl: string | null;
-  isAvailable: boolean;
-}
 
 export const AdminDashboardPage: React.FC = () => {
   const { user, logout } = useAuth();
@@ -251,29 +242,44 @@ const OrdersPanel: React.FC<{ token: string; onUnauthorized: () => void }> = ({ 
 
 /* ---------- One-click availability (US-8.3) ---------- */
 
+const PRODUCT_STATUS_LABELS: Record<AdminProduct['status'], string> = {
+  available: 'На вітрині',
+  hidden: 'Прихований',
+  discontinued: 'Знято з продажу',
+};
+
 const CatalogPanel: React.FC<{ token: string; onUnauthorized: () => void }> = ({ token, onUnauthorized }) => {
-  const [products, setProducts] = useState<CatalogProduct[]>([]);
+  const [products, setProducts] = useState<AdminProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     let cancelled = false;
-    apiRequest<{ items: CatalogProduct[] }>('/catalog/products?page=1&pageSize=100')
-      .then(result => { if (!cancelled) setProducts(result.items); })
-      .catch(() => { if (!cancelled) setMessage('Не вдалося завантажити каталог.'); })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, []);
+    const timer = window.setTimeout(() => {
+      adminApi.listProducts(token, search.trim() || undefined)
+        .then(result => { if (!cancelled) setProducts(result); })
+        .catch(error => {
+          if (cancelled) return;
+          if (error instanceof ApiError && error.status === 401) onUnauthorized();
+          else setMessage('Не вдалося завантажити товари.');
+        })
+        .finally(() => { if (!cancelled) setLoading(false); });
+    }, 250);
+    return () => { cancelled = true; window.clearTimeout(timer); };
+  }, [token, search, onUnauthorized]);
 
-  const toggle = async (product: CatalogProduct) => {
+  const toggle = async (product: AdminProduct) => {
     setPending(product.id);
     setMessage(null);
     try {
-      const result = await adminApi.setAvailability(token, product.id, !product.isAvailable);
-      setProducts(current => current.map(item => (item.id === product.id ? { ...item, isAvailable: result.isAvailable } : item)));
-      if (!product.isAvailable && !result.isAvailable && result.quantityAvailable === 0) {
-        setMessage(`«${product.name}»: залишок 0, тому букет лишається недоступним. Оновіть кількість у картці товару.`);
+      const result = await adminApi.setAvailability(token, product.id, product.isTemporarilyUnavailable);
+      setProducts(current => current.map(item => (item.id === product.id
+        ? { ...item, isTemporarilyUnavailable: result.isTemporarilyUnavailable, isAvailable: result.isAvailable, quantityAvailable: result.quantityAvailable }
+        : item)));
+      if (!result.isTemporarilyUnavailable && !result.isAvailable) {
+        setMessage(`«${product.name}» увімкнено, але покупці його не побачать у продажу: ${product.status !== 'available' ? 'товар прихований' : 'залишок 0'}.`);
       }
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) onUnauthorized();
@@ -285,30 +291,45 @@ const CatalogPanel: React.FC<{ token: string; onUnauthorized: () => void }> = ({
 
   return (
     <section>
-      <h1 className="mb-1 font-serif text-2xl sm:text-3xl">Наявність букетів</h1>
-      <p className="mb-5 text-xs text-white/50">Перемикач одразу ховає кнопку «Додати в кошик» на сайті; букет лишається у вітрині з міткою «Немає в наявності».</p>
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="mb-1 font-serif text-2xl sm:text-3xl">Наявність букетів</h1>
+          <p className="text-xs text-white/50">Перемикач «Немає в наявності» одразу ховає кнопку «Додати в кошик» на сайті; букет лишається у вітрині з міткою.</p>
+        </div>
+        <input type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder="Пошук за назвою або SKU"
+          aria-label="Пошук товарів"
+          className="w-full rounded-xl border border-[#522149] bg-[#1B0918] px-3 py-2 text-sm text-white outline-none focus:border-[#F5B2E2] sm:w-64" />
+      </div>
       {message && <p role="status" className="mb-4 rounded-xl bg-amber-400/10 px-3 py-2 text-sm text-amber-100">{message}</p>}
       {loading ? (
         <div className="flex justify-center py-16 text-white/60"><Loader2 className="h-6 w-6 animate-spin" /></div>
+      ) : products.length === 0 ? (
+        <p className="rounded-2xl border border-[#481A3F] bg-[#240D20] p-8 text-center text-sm text-white/60">Товарів не знайдено.</p>
       ) : (
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {products.map(product => (
-            <li key={product.id} className="flex items-center gap-3 rounded-2xl border border-[#481A3F] bg-[#240D20] p-3">
-              {product.imageUrl
-                ? <img src={product.imageUrl} alt="" className="h-14 w-14 shrink-0 rounded-xl object-cover" />
-                : <div className="h-14 w-14 shrink-0 rounded-xl bg-[#1B0918]" />}
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">{product.name}</p>
-                <p className="text-xs text-white/50">{product.sku} · {formatUah(product.price)}</p>
-              </div>
-              <label className="flex cursor-pointer flex-col items-center gap-1 text-[10px] text-white/60">
-                <input type="checkbox" role="switch" className="peer sr-only" checked={product.isAvailable} disabled={pending === product.id}
-                  onChange={() => void toggle(product)} aria-label={`${product.name}: ${product.isAvailable ? 'в наявності' : 'немає в наявності'}`} />
-                <span className="relative h-6 w-11 rounded-full bg-[#4E1E45] transition-colors peer-checked:bg-emerald-500 peer-disabled:opacity-50 after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-5" />
-                {product.isAvailable ? 'Є' : 'Немає'}
-              </label>
-            </li>
-          ))}
+          {products.map(product => {
+            const switchedOn = !product.isTemporarilyUnavailable;
+            return (
+              <li key={product.id} className={`flex items-center gap-3 rounded-2xl border p-3 ${product.status === 'available' ? 'border-[#481A3F] bg-[#240D20]' : 'border-dashed border-[#481A3F] bg-[#1B0918]'}`}>
+                {product.imageUrl
+                  ? <img src={product.imageUrl} alt="" className="h-14 w-14 shrink-0 rounded-xl object-cover" />
+                  : <div className="h-14 w-14 shrink-0 rounded-xl bg-[#1B0918]" />}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">{product.name}</p>
+                  <p className="text-xs text-white/50">{product.sku} · {formatUah(product.price)} · залишок {product.quantityAvailable}</p>
+                  <p className={`text-[11px] ${product.isAvailable ? 'text-emerald-300' : 'text-white/45'}`}>
+                    {product.status !== 'available' ? PRODUCT_STATUS_LABELS[product.status] : product.isAvailable ? 'Продається' : switchedOn ? 'Залишок 0' : 'Немає в наявності'}
+                  </p>
+                </div>
+                <label className="flex cursor-pointer flex-col items-center gap-1 text-[10px] text-white/60">
+                  <input type="checkbox" role="switch" className="peer sr-only" checked={switchedOn} disabled={pending === product.id}
+                    onChange={() => void toggle(product)} aria-label={`${product.name}: ${switchedOn ? 'в наявності' : 'немає в наявності'}`} />
+                  <span className="relative h-6 w-11 rounded-full bg-[#4E1E45] transition-colors peer-checked:bg-emerald-500 peer-disabled:opacity-50 after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-5" />
+                  {switchedOn ? 'Є' : 'Немає'}
+                </label>
+              </li>
+            );
+          })}
         </ul>
       )}
     </section>
