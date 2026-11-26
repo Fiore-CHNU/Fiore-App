@@ -56,6 +56,19 @@ export interface AdminOrderDetails {
   statusHistory: { status: OrderStatus; note: string | null; changedBy: string | null; changedAt: string }[];
 }
 
+export interface AdminProduct {
+  id: string;
+  sku: string;
+  name: string;
+  price: number;
+  currency: string;
+  status: 'available' | 'hidden' | 'discontinued';
+  isTemporarilyUnavailable: boolean;
+  quantityAvailable: number;
+  isAvailable: boolean;
+  imageUrl: string | null;
+}
+
 export interface OrderQueueFilter {
   status?: OrderStatus | '';
   deliveryDate?: string;
@@ -96,6 +109,8 @@ export const adminApi = {
     }),
   deliverySummary: (token: string, orderId: string) =>
     apiRequest<{ text: string }>(`/admin/orders/${orderId}/delivery-summary`, { accessToken: token }),
+  listProducts: (token: string, search?: string) =>
+    apiRequest<AdminProduct[]>(`/admin/products${search ? `?search=${encodeURIComponent(search)}` : ''}`, { accessToken: token }),
   setAvailability: (token: string, productId: string, isAvailable: boolean) =>
     apiRequest<{ id: string; isTemporarilyUnavailable: boolean; isAvailable: boolean; quantityAvailable: number }>(
       `/admin/products/${productId}/availability`,
