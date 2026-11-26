@@ -35,6 +35,9 @@ npm run dev
 npm run build
 ```
 
+### Безперервна інтеграція
+GitHub Actions (`.github/workflows/frontend-ci.yml`) на кожен PR і push у `main` запускає `npm ci`, `npm run lint` і `npm run build` на Node.js з `.nvmrc`.
+
 ### Перевірка лінтером
 ```bash
 npm run lint
