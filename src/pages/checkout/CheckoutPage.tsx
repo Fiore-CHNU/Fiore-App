@@ -1,12 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { AlertTriangle, ArrowLeft, CalendarDays, Loader2, Lock, ShoppingBag } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Loader2, Lock, ShoppingBag } from 'lucide-react';
 import { useCart } from '../../hooks/useCart';
-import { ApiError, formatSlotTime, formatUah } from '../../services/http';
+import { ApiError, formatUah } from '../../services/http';
 import { normalizePhoneInput, orderApi, orderSessionStore, PHONE_PATTERN } from '../../services/orderApi';
 import type { CheckoutConflictItem, DeliverySlot } from '../../types/order';
 import { FormField, Section } from '../../components/checkout/FormField';
 import { inputClassName } from '../../components/checkout/formStyles';
+import { DeliverySlotPicker } from '../../components/checkout/DeliverySlotPicker';
 
 /** Delivery is only within the city (US-4.2); must match the backend `Delivery:ServiceCities`. */
 const SERVICE_CITY = 'Чернівці';
@@ -325,40 +326,24 @@ export const CheckoutPage: React.FC = () => {
           </Section>
 
           <Section step={3} title="Дата й час доставки">
-            <div className="mb-4 max-w-xs">
-              <FormField id="deliveryDate" label="Дата">
-                <input type="date" className={inputClassName(false)} min={todayIso()} value={date}
-                  onChange={e => { if (e.target.value) { setSelectedSlot(null); void loadSlots(e.target.value); } }} />
-              </FormField>
-            </div>
-            {slotsLoading ? (
-              <div className="flex items-center gap-2 text-sm text-white/60"><Loader2 className="h-4 w-4 animate-spin" /> Завантаження інтервалів…</div>
-            ) : slotsError ? (
-              <div className="text-sm text-red-300">
-                {slotsError}{' '}
-                <button type="button" className="underline" onClick={() => void loadSlots(date || undefined)}>Спробувати ще раз</button>
-              </div>
-            ) : (
-              <div role="radiogroup" aria-label="Інтервал доставки" className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
-                {slots.map(slot => {
-                  const selected = selectedSlot?.scheduledFrom === slot.scheduledFrom;
-                  return (
-                    <button key={slot.scheduledFrom} type="button" role="radio" aria-checked={selected} disabled={!slot.isAvailable}
-                      onClick={() => { setSelectedSlot(slot); setErrors(current => ({ ...current, slot: undefined })); }}
-                      className={`rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-35 ${
-                        selected ? 'border-[#F5B2E2] bg-[#F5B2E2] text-[#1E0B1A]' : 'border-[#522149] bg-[#1E0B1A] text-white hover:border-[#F5B2E2]/70'
-                      }`}>
-                      {formatSlotTime(slot.scheduledFrom)}–{formatSlotTime(slot.scheduledTo)}
-                      {!slot.isAvailable && <span className="block text-[11px] font-normal">недоступно</span>}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-            {errors.slot && <p className="mt-2 text-xs text-red-300" role="alert">{errors.slot}</p>}
-            <p className="mt-3 flex items-center gap-1.5 text-xs text-white/45">
-              <CalendarDays className="h-3.5 w-3.5" /> Інтервал можна обрати не пізніше ніж за 90 хвилин до його початку (київський час).
-            </p>
+            <DeliverySlotPicker
+              selectedDate={date || todayIso()}
+              onDateChange={newDate => {
+                setDate(newDate);
+                setSelectedSlot(null);
+                void loadSlots(newDate);
+              }}
+              slots={slots}
+              selectedSlot={selectedSlot}
+              onSlotSelect={slot => {
+                setSelectedSlot(slot);
+                setErrors(current => ({ ...current, slot: undefined }));
+              }}
+              isLoading={slotsLoading}
+              error={slotsError}
+              onRetry={() => void loadSlots(date || undefined)}
+              validationError={errors.slot}
+            />
           </Section>
 
           <Section step={4} title="Листівка">
