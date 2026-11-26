@@ -4,7 +4,7 @@ import { fetchProductDetails, fetchSimilarProducts } from '../../services/api';
 import type { ProductDetailsResponse, CatalogProductItem } from '../../types/catalog';
 import { ProductDescription } from './ProductDescription';
 import { SimilarProducts } from './SimilarProducts';
-import { LazyImage } from '../common/LazyImage';
+import { ProductGallery } from './ProductGallery';
 import { useCart } from '../../hooks/useCart';
 
 interface ProductDetailsModalProps {
@@ -24,7 +24,6 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
   const [similar, setSimilar] = useState<CatalogProductItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isAdded, setIsAdded] = useState(false);
 
   const { addToCart, getItemQuantity } = useCart();
@@ -45,7 +44,6 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
       // Fetch truly similar products using product's facets and price from backend
       const similarData = await fetchSimilarProducts(productId, productData);
       setSimilar(similarData);
-      setActiveImageIndex(0);
     } catch (err) {
       console.error(err);
       setError('Не вдалося завантажити інформацію про букет. Перевірте з’єднання та спробуйте знову.');
@@ -162,45 +160,12 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
             /* Main Content: Gallery + Description Block */
             <div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-10 items-start">
-                {/* Left: Gallery (US-2.1) */}
-                <div className="space-y-3">
-                  <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-[#2D1227] border border-[#431A3B] shadow-xl">
-                    <LazyImage
-                      src={details.images[activeImageIndex]?.imageUrl || ''}
-                      alt={details.images[activeImageIndex]?.altText || details.name}
-                      className="w-full h-full object-cover transition-all duration-300"
-                    />
-
-                    {!details.isAvailable && (
-                      <div className="absolute top-4 left-4 bg-[#1E0B1A]/90 backdrop-blur-md text-[#FFD7F1] text-xs font-semibold px-3 py-1 rounded-full border border-[#F5B2E2]/30">
-                        Немає в наявності
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Thumbnail Row */}
-                  {details.images.length > 1 && (
-                    <div className="flex gap-2.5 overflow-x-auto pb-1">
-                      {details.images.map((img, idx) => (
-                        <button
-                          key={img.id}
-                          onClick={() => setActiveImageIndex(idx)}
-                          className={`relative w-16 h-20 rounded-xl overflow-hidden border-2 transition-all shrink-0 ${
-                            activeImageIndex === idx
-                              ? 'border-[#F5B2E2] scale-105 shadow-md'
-                              : 'border-[#431A3B] opacity-60 hover:opacity-100'
-                          }`}
-                        >
-                          <img
-                            src={img.imageUrl}
-                            alt={img.altText || details.name}
-                            className="w-full h-full object-cover"
-                          />
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                {/* Left: Gallery (US-2.1: swipe, fullscreen, placeholder) */}
+                <ProductGallery
+                  images={details.images}
+                  productName={details.name}
+                  isAvailable={details.isAvailable}
+                />
 
                 {/* Right: Info & Description Block (US-2.2) */}
                 <div className="space-y-5">
