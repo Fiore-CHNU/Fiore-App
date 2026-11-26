@@ -3,10 +3,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { AlertTriangle, ArrowLeft, Loader2, Lock, ShoppingBag } from 'lucide-react';
 import { useCart } from '../../hooks/useCart';
 import { ApiError, formatUah } from '../../services/http';
-import { normalizePhoneInput, orderApi, orderSessionStore, PHONE_PATTERN } from '../../services/orderApi';
+import { orderApi, orderSessionStore, PHONE_PATTERN } from '../../services/orderApi';
 import type { CheckoutConflictItem, DeliverySlot } from '../../types/order';
-import { FormField, Section } from '../../components/checkout/FormField';
-import { inputClassName } from '../../components/checkout/formStyles';
+import { Section } from '../../components/checkout/FormField';
+import { CustomerFormSection } from '../../components/checkout/CustomerFormSection';
 import { DeliverySlotPicker } from '../../components/checkout/DeliverySlotPicker';
 import { GreetingCardSection } from '../../components/checkout/GreetingCardSection';
 import { RecipientAddressSection } from '../../components/checkout/RecipientAddressSection';
@@ -255,22 +255,19 @@ export const CheckoutPage: React.FC = () => {
       <form onSubmit={handleSubmit} noValidate className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_380px] lg:items-start">
         <div className="flex flex-col gap-6">
           <Section step={1} title="Замовник">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <FormField id="contactName" label="Ім’я" required error={errors.contactName}>
-                <input className={inputClassName(Boolean(errors.contactName))} autoComplete="name" maxLength={120}
-                  value={form.contactName} onChange={e => update('contactName', e.target.value)} />
-              </FormField>
-              <FormField id="contactPhone" label="Телефон" required error={errors.contactPhone} hint="+380XXXXXXXXX">
-                <input className={inputClassName(Boolean(errors.contactPhone))} type="tel" inputMode="tel" autoComplete="tel"
-                  value={form.contactPhone} onChange={e => update('contactPhone', normalizePhoneInput(e.target.value))} />
-              </FormField>
-              <div className="sm:col-span-2">
-                <FormField id="contactEmail" label="Email" required error={errors.contactEmail} hint="Надішлемо підтвердження та посилання на статус">
-                  <input className={inputClassName(Boolean(errors.contactEmail))} type="email" autoComplete="email" maxLength={254}
-                    value={form.contactEmail} onChange={e => update('contactEmail', e.target.value)} />
-                </FormField>
-              </div>
-            </div>
+            <CustomerFormSection
+              contactName={form.contactName}
+              onContactNameChange={val => update('contactName', val)}
+              contactPhone={form.contactPhone}
+              onContactPhoneChange={val => update('contactPhone', val)}
+              contactEmail={form.contactEmail}
+              onContactEmailChange={val => update('contactEmail', val)}
+              errors={{
+                contactName: errors.contactName,
+                contactPhone: errors.contactPhone,
+                contactEmail: errors.contactEmail,
+              }}
+            />
           </Section>
 
           <Section step={2} title="Одержувач і адреса">

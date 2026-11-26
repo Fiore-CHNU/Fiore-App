@@ -1,8 +1,8 @@
 import React from 'react';
-import { Building, Gift, Info, MapPin, Navigation, Phone, User, UserCheck } from 'lucide-react';
+import { Building, Gift, Info, MapPin, Navigation, User, UserCheck } from 'lucide-react';
 import { FormField } from './FormField';
 import { inputClassName } from './formStyles';
-import { normalizePhoneInput } from '../../services/orderApi';
+import { PhoneInput } from './PhoneInput';
 
 export interface RecipientAddressSectionProps {
   recipientIsCustomer: boolean;
@@ -144,19 +144,14 @@ export const RecipientAddressSection: React.FC<RecipientAddressSectionProps> = (
             label="Телефон одержувача"
             required
             error={errors.recipientPhone}
-            hint="+380XXXXXXXXX"
+            hint="Формат: +380 (XX) XXX-XX-XX"
           >
-            <div className="relative">
-              <input
-                className={`${inputClassName(Boolean(errors.recipientPhone))} pl-9`}
-                type="tel"
-                inputMode="tel"
-                placeholder="+380"
-                value={recipientPhone}
-                onChange={e => onRecipientPhoneChange(normalizePhoneInput(e.target.value))}
-              />
-              <Phone className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-white/30" />
-            </div>
+            <PhoneInput
+              id="recipientPhone"
+              value={recipientPhone}
+              onChange={onRecipientPhoneChange}
+              hasError={Boolean(errors.recipientPhone)}
+            />
           </FormField>
         </div>
       ) : (
