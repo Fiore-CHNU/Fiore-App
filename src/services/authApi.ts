@@ -1,62 +1,55 @@
-import type { LoginCredentials, StaffUser } from '../types/auth';
+import { ApiError, apiRequest } from './http';
+import type { LoginCredentials, StaffRole, StaffUser } from '../types/auth';
 
-const API_BASE_URL = 'http://localhost:5090/api/v1';
+interface AuthResponse {
+  userId: string;
+  email: string;
+  roles: string[];
+  accessToken: string;
+  expiresAt: string;
+}
 
-// Seed staff accounts for testing & fallback matching backend DB design
-const MOCK_STAFF_USERS: Record<string, { passwordHash: string; user: StaffUser }> = {
-  admin: {
-    passwordHash: 'admin123',
-    user: {
-      id: 'staff-admin-001',
-      username: 'admin',
-      fullName: 'Олександр Мельник',
-      role: 'admin',
-      email: 'admin@fiore.ua',
-      token: 'jwt-staff-token-admin-123456789',
-    },
-  },
-  manager: {
-    passwordHash: 'manager123',
-    user: {
-      id: 'staff-manager-001',
-      username: 'manager',
-      fullName: 'Ірина Коваль',
-      role: 'manager',
-      email: 'manager@fiore.ua',
-      token: 'jwt-staff-token-manager-987654321',
-    },
-  },
-};
+export type LoginResult =
+  | { kind: 'success'; user: StaffUser }
+  | { kind: 'invalid' }
+  | { kind: 'locked'; retryAfterSeconds: number }
+  | { kind: 'forbidden' }
+  | { kind: 'error' };
 
-export async function loginStaff(credentials: LoginCredentials): Promise<{ user?: StaffUser; error?: string }> {
+const pickStaffRole = (roles: string[]): StaffRole | null =>
+  roles.includes('administrator') ? 'administrator' : roles.includes('manager') ? 'manager' : null;
+
+/**
+ * Staff sign-in against the backend (US-7.1). The server counts failed attempts and locks the
+ * account for 5 minutes after 5 wrong passwords, answering 423 with `retryAfterSeconds`.
+ */
+export async function loginStaff(credentials: LoginCredentials): Promise<LoginResult> {
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000);
-
-    const res = await fetch(`${API_BASE_URL}/auth/staff/login`, {
+    const response = await apiRequest<AuthResponse>('/auth/login', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(credentials),
-      signal: controller.signal,
+      body: { email: credentials.email.trim(), password: credentials.password },
     });
-    clearTimeout(timeoutId);
-
-    if (res.ok) {
-      const data = await res.json();
-      return { user: data.user || data };
+    const role = pickStaffRole(response.roles);
+    if (!role) return { kind: 'forbidden' };
+    return {
+      kind: 'success',
+      user: {
+        id: response.userId,
+        email: response.email,
+        fullName: response.email,
+        role,
+        token: response.accessToken,
+        expiresAt: response.expiresAt,
+      },
+    };
+  } catch (error) {
+    if (error instanceof ApiError) {
+      if (error.status === 401 || error.status === 400) return { kind: 'invalid' };
+      if (error.status === 423) {
+        const seconds = (error.body as { retryAfterSeconds?: number } | undefined)?.retryAfterSeconds;
+        return { kind: 'locked', retryAfterSeconds: typeof seconds === 'number' ? seconds : 300 };
+      }
     }
-  } catch {
-    // API is offline or not reachable - fall back to mock accounts
+    return { kind: 'error' };
   }
-
-  // Fallback mock authentication
-  const found = MOCK_STAFF_USERS[credentials.username.trim().toLowerCase()];
-  if (found && found.passwordHash === credentials.password) {
-    return { user: found.user };
-  }
-
-  // Per US-7.1 Scenario 2: «Неправильний логін або пароль» without revealing which field was incorrect
-  return { error: 'Неправильний логін або пароль' };
 }

@@ -1,16 +1,22 @@
-export type StaffRole = 'admin' | 'manager';
+export type StaffRole = 'administrator' | 'manager';
 
+export const STAFF_ROLE_LABELS: Record<StaffRole, string> = {
+  administrator: 'Адміністратор',
+  manager: 'Менеджер',
+};
+
+/** Signed-in staff member; the JWT comes from POST /api/v1/auth/login. */
 export interface StaffUser {
   id: string;
-  username: string;
+  email: string;
   fullName: string;
   role: StaffRole;
-  email: string;
   token: string;
+  expiresAt: string;
 }
 
 export interface LoginCredentials {
-  username: string;
+  email: string;
   password: string;
 }
 
