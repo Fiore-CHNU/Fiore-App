@@ -52,6 +52,7 @@ npm run lint
 | **EAN-336** | **US-1.1.2** Frontend: Сітка карток каталогу, адаптивна верстка | `main` |  **Done** |
 | **EAN-341** | **US-1.4.2** Frontend: Рядок швидкого пошуку у шапці з підказками | `main` |  **Done** |
 | **EAN-346** | **US-1.5.2** Frontend: Перемикач сортування (за ціною та новизною) | `main` |  **Done** |
+| **EAN-505 / EAN-517** | Frontend: Компонент Colour Picker (вибір кольорів, контрастні галочки, лічильник, скидання) | `feature/EAN-517-colour-picker` | ✅ **Done** |
 | **EAN-465** | **NFR-03.2** Frontend: Ліниве завантаження фото (IntersectionObserver) | `main` |  **Done** |
 | **EAN-363** | **US-3.1.2** Frontend: Кнопка «Додати в кошик», лічильник | `main` |  **Done** |
 | **EAN-350 / EAN-352** | **US-2.1.2** Frontend: Галерея: свайп, повний екран (Lightbox), стрілки, брендована заглушка | `feature/EAN-352-gallery-swipe-fullscreen` | ✅ **Done** |
