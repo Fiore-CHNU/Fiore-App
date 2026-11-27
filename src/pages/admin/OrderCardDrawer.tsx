@@ -4,6 +4,7 @@ import { ApiError, formatDateTime, formatSlot, formatUah } from '../../services/
 import { adminApi, CANCELLABLE, COURIER_STATUSES, NEXT_STATUS, type AdminOrderDetails } from '../../services/adminApi';
 import { normalizePhoneInput, PHONE_PATTERN } from '../../services/orderApi';
 import { ORDER_STATUS_LABELS } from '../../types/order';
+import { printGreetingCard } from './printGreetingCard';
 
 const PAYMENT_STATUS_LABELS: Record<string, string> = {
   initiated: 'очікує',
@@ -19,22 +20,6 @@ interface OrderCardDrawerProps {
   onChanged: () => void;
   onUnauthorized: () => void;
 }
-
-const escapeHtml = (value: string) =>
-  value.replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char] ?? char);
-
-/** US-9.3: prints only the greeting-card text in a separate window. */
-const printCard = (order: AdminOrderDetails) => {
-  const popup = window.open('', '_blank', 'width=600,height=500');
-  if (!popup) return;
-  popup.document.write(`<!doctype html><html lang="uk"><head><meta charset="utf-8"><title>Листівка ${escapeHtml(order.orderNumber)}</title>
-<style>body{font-family:Georgia,serif;display:flex;align-items:center;justify-content:center;min-height:90vh;margin:0}
-p{font-size:22px;line-height:1.6;max-width:420px;text-align:center;white-space:pre-wrap}</style></head>
-<body><p>${escapeHtml(order.cardMessage ?? '')}</p></body></html>`);
-  popup.document.close();
-  popup.focus();
-  popup.print();
-};
 
 export const OrderCardDrawer: React.FC<OrderCardDrawerProps> = ({ orderId, token, onClose, onChanged, onUnauthorized }) => {
   const [order, setOrder] = useState<AdminOrderDetails | null>(null);
@@ -228,9 +213,20 @@ export const OrderCardDrawer: React.FC<OrderCardDrawerProps> = ({ orderId, token
 
             {order.cardMessage && (
               <section className="mb-5 rounded-2xl border border-[#522149] p-4 text-sm">
-                <div className="mb-2 flex items-center justify-between">
-                  <h3 className="font-serif text-base text-[#FFD7F1]">Листівка</h3>
-                  <button onClick={() => printCard(order)} className="inline-flex items-center gap-1.5 text-xs text-[#F5B2E2] hover:underline">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <div>
+                    <h3 className="font-serif text-base text-[#FFD7F1]">Листівка</h3>
+                    <p className="text-[11px] text-white/45">Формат друку: 15×10 см</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!printGreetingCard(order.orderNumber, order.cardMessage ?? '')) {
+                        setMessage({ kind: 'error', text: 'Дозвольте спливаючі вікна для друку листівки.' });
+                      }
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-[#F5B2E2]/40 px-3 py-1.5 text-xs font-medium text-[#F5B2E2] hover:bg-[#F5B2E2]/10"
+                  >
                     <Printer className="h-3.5 w-3.5" /> Друкувати
                   </button>
                 </div>
