@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight, AlertTriangle, Loader2 } from 'lucide-react';
 import { useCart } from '../../hooks/useCart';
 import { formatUah } from '../../services/http';
+import { CartChangesAlert } from '../checkout/CartChangesAlert';
 
 export const CartDrawer: React.FC = () => {
   const {
@@ -199,16 +200,24 @@ export const CartDrawer: React.FC = () => {
 
             {/* Footer / Summary */}
             <div className="p-5 border-t border-[#431A3B] bg-[#1E0B1A]/80 backdrop-blur-md">
-              {hasPriceChanges && (
-                <div className="mb-3 rounded-xl border border-amber-300/30 bg-amber-400/10 px-3 py-2.5 text-xs text-amber-100">
-                  <p className="mb-2">Ціни деяких букетів змінилися. Підтвердіть нові ціни, щоб продовжити.</p>
-                  <button
-                    onClick={() => void acceptPrices()}
-                    disabled={isSyncing}
-                    className="rounded-full bg-amber-200 px-3 py-1.5 font-semibold text-[#1E0B1A] hover:bg-amber-100 disabled:opacity-50"
-                  >
-                    Підтвердити нові ціни
-                  </button>
+              {(hasPriceChanges || hasUnavailableItems) && (
+                <div className="mb-3">
+                  <CartChangesAlert
+                    items={items}
+                    hasPriceChanges={hasPriceChanges}
+                    hasUnavailableItems={hasUnavailableItems}
+                    meetsMinimumOrder={meetsMinimumOrder}
+                    minimumOrderAmount={minimumOrderAmount}
+                    totalAmount={totalAmount}
+                    isSyncing={isSyncing}
+                    onAcceptPrices={acceptPrices}
+                    onRemoveUnavailable={async () => {
+                      for (const item of items.filter(candidate => !candidate.product.isAvailable)) {
+                        await removeFromCart(item.product.id);
+                      }
+                    }}
+                    compact
+                  />
                 </div>
               )}
               <div className="flex items-center justify-between text-sm text-white/70 mb-1">
