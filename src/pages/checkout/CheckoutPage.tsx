@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { AlertTriangle, ArrowLeft, Loader2, Lock, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, Loader2, Lock, ShoppingBag } from 'lucide-react';
 import { useCart } from '../../hooks/useCart';
 import { ApiError, formatUah } from '../../services/http';
 import { orderApi, orderSessionStore, PHONE_PATTERN } from '../../services/orderApi';
 import type { CheckoutConflictItem, DeliverySlot } from '../../types/order';
 import { Section } from '../../components/checkout/FormField';
+import { CartChangesAlert } from '../../components/checkout/CartChangesAlert';
 import { CustomerFormSection } from '../../components/checkout/CustomerFormSection';
 import { DeliverySlotPicker } from '../../components/checkout/DeliverySlotPicker';
 import { GreetingCardSection } from '../../components/checkout/GreetingCardSection';
@@ -363,44 +364,36 @@ export const CheckoutPage: React.FC = () => {
             <p className="mt-2 text-xs text-white/45">Безкоштовна доставка від {formatUah(1500)}.</p>
           )}
 
-          {(banner || blockers.length > 0) && (
-            <div role="alert" className="mt-4 space-y-2 rounded-xl border border-amber-300/30 bg-amber-400/10 p-3 text-xs text-amber-100">
-              {banner && <p className="flex gap-2"><AlertTriangle className="h-4 w-4 shrink-0" />{banner}</p>}
-              {conflictItems.length > 0 && (
-                <ul className="list-disc space-y-0.5 pl-5">
-                  {conflictItems.map(item => (
-                    <li key={item.productId}>
-                      {item.name}
-                      {item.reason === 'priceChanged' && item.acceptedUnitPrice != null && item.currentUnitPrice != null &&
-                        `: ${formatUah(item.acceptedUnitPrice)} → ${formatUah(item.currentUnitPrice)}`}
-                      {item.reason === 'insufficientQuantity' && item.quantityAvailable != null && `: доступно ${item.quantityAvailable} шт.`}
-                      {item.reason === 'unavailable' && ': немає в наявності'}
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {blockers.filter(text => text !== banner).map(text => <p key={text}>{text}</p>)}
-              <div className="flex flex-wrap gap-2 pt-1">
-                {cart.hasPriceChanges && (
-                  <button type="button" onClick={() => { setBanner(null); setConflictItems([]); void cart.acceptPrices(); }}
-                    className="rounded-full bg-amber-200 px-3 py-1.5 font-semibold text-[#1E0B1A] hover:bg-amber-100">
-                    Підтвердити нові ціни
-                  </button>
-                )}
-                {cart.hasUnavailableItems && (
-                  <button type="button"
-                    onClick={async () => {
-                      for (const item of items.filter(candidate => !candidate.product.isAvailable)) await cart.removeFromCart(item.product.id);
-                      setBanner(null);
-                      setConflictItems([]);
-                    }}
-                    className="rounded-full bg-amber-200 px-3 py-1.5 font-semibold text-[#1E0B1A] hover:bg-amber-100">
-                    Видалити недоступні
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
+          <div className="mt-4">
+            <CartChangesAlert
+              banner={banner}
+              conflictItems={conflictItems}
+              items={items}
+              hasPriceChanges={cart.hasPriceChanges}
+              hasUnavailableItems={cart.hasUnavailableItems}
+              meetsMinimumOrder={cart.meetsMinimumOrder}
+              minimumOrderAmount={cart.minimumOrderAmount}
+              totalAmount={cart.totalAmount}
+              isSyncing={cart.isSyncing}
+              onAcceptPrices={async () => {
+                setBanner(null);
+                setConflictItems([]);
+                await cart.acceptPrices();
+              }}
+              onRemoveUnavailable={async () => {
+                for (const item of items.filter(candidate => !candidate.product.isAvailable)) {
+                  await cart.removeFromCart(item.product.id);
+                }
+                setBanner(null);
+                setConflictItems([]);
+              }}
+              onAdjustQuantity={async (productId, qty) => {
+                await cart.updateQuantity(productId, qty);
+                setConflictItems(current => current.filter(c => c.productId !== productId));
+                setBanner(null);
+              }}
+            />
+          </div>
 
           <button type="submit" disabled={submitting || cart.isSyncing || blockers.length > 0}
             className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-[#F5B2E2] px-4 py-3 text-sm font-semibold text-[#1E0B1A] shadow-md transition-all hover:bg-[#FDBDE9] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100">
