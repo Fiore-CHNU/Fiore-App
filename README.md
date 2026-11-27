@@ -56,6 +56,7 @@ npm run lint
 | **EAN-363** | **US-3.1.2** Frontend: Кнопка «Додати в кошик», лічильник | `main` |  **Done** |
 | **EAN-350 / EAN-352** | **US-2.1.2** Frontend: Галерея: свайп, повний екран (Lightbox), стрілки, брендована заглушка | `feature/EAN-352-gallery-swipe-fullscreen` | ✅ **Done** |
 | **EAN-355 / EAN-357** | **US-2.2.2** Frontend: Блок опису, габарити та схожі букети | `main` | ✅ **Done** |
+| **EAN-377 / EAN-379** | **US-4.2.2** Frontend: Форма «Одержувач і адреса» (подарунок/собі, валідація, підказки кур’єру) | `feature/EAN-379-recipient-address` | ✅ **Done** |
 | **EAN-382 / EAN-384** | **US-4.3.2** Frontend: Вибір дати та слоту доставки (швидкі дні, календар, статус місткості, буфер 90 хв) | `feature/EAN-384-delivery-slots` | ✅ **Done** |
 | **EAN-387 / EAN-389** | **US-4.4.2** Frontend: Блок листівки з лічильником (250 символів, швидкі шаблони, попередній перегляд) | `feature/EAN-389-greeting-card` | ✅ **Done** |
 | **EAN-426 / EAN-428** | **US-7.1.2** Frontend: Сторінка входу до адмін-панелі, вихід, захист ролей | `feature/EAN-428-admin-login` |  **Done** |

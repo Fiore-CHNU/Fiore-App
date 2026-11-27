@@ -9,6 +9,7 @@ import { FormField, Section } from '../../components/checkout/FormField';
 import { inputClassName } from '../../components/checkout/formStyles';
 import { DeliverySlotPicker } from '../../components/checkout/DeliverySlotPicker';
 import { GreetingCardSection } from '../../components/checkout/GreetingCardSection';
+import { RecipientAddressSection } from '../../components/checkout/RecipientAddressSection';
 
 /** Delivery is only within the city (US-4.2); must match the backend `Delivery:ServiceCities`. */
 const SERVICE_CITY = 'Чернівці';
@@ -273,55 +274,35 @@ export const CheckoutPage: React.FC = () => {
           </Section>
 
           <Section step={2} title="Одержувач і адреса">
-            <label className="mb-4 flex cursor-pointer items-center gap-2.5 text-sm text-white/80">
-              <input type="checkbox" className="h-4 w-4 accent-[#F5B2E2]" checked={form.recipientIsCustomer}
-                onChange={e => update('recipientIsCustomer', e.target.checked)} />
-              Я отримаю замовлення сам(а)
-            </label>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              {!form.recipientIsCustomer && (
-                <>
-                  <FormField id="recipientName" label="Ім’я одержувача" required error={errors.recipientName}>
-                    <input className={inputClassName(Boolean(errors.recipientName))} maxLength={120}
-                      value={form.recipientName} onChange={e => update('recipientName', e.target.value)} />
-                  </FormField>
-                  <FormField id="recipientPhone" label="Телефон одержувача" required error={errors.recipientPhone} hint="+380XXXXXXXXX">
-                    <input className={inputClassName(Boolean(errors.recipientPhone))} type="tel" inputMode="tel"
-                      value={form.recipientPhone} onChange={e => update('recipientPhone', normalizePhoneInput(e.target.value))} />
-                  </FormField>
-                </>
-              )}
-              <div className="sm:col-span-2">
-                <FormField id="city" label="Місто" hint="Доставка можлива лише в межах міста">
-                  <input className={`${inputClassName(false)} opacity-70`} value={SERVICE_CITY} readOnly />
-                </FormField>
-              </div>
-              <div className="sm:col-span-2">
-                <FormField id="street" label="Вулиця" required error={errors.street}>
-                  <input className={inputClassName(Boolean(errors.street))} autoComplete="address-line1" maxLength={160}
-                    value={form.street} onChange={e => update('street', e.target.value)} />
-                </FormField>
-              </div>
-              <FormField id="building" label="Будинок" required error={errors.building}>
-                <input className={inputClassName(Boolean(errors.building))} maxLength={32}
-                  value={form.building} onChange={e => update('building', e.target.value)} />
-              </FormField>
-              <FormField id="apartment" label="Квартира" error={errors.apartment}>
-                <input className={inputClassName(Boolean(errors.apartment))} maxLength={32}
-                  value={form.apartment} onChange={e => update('apartment', e.target.value)} />
-              </FormField>
-              <div className="sm:col-span-2">
-                <FormField id="deliveryNotes" label="Коментар для кур’єра" error={errors.deliveryNotes}>
-                  <textarea className={`${inputClassName(Boolean(errors.deliveryNotes))} min-h-20 resize-y`} maxLength={1000}
-                    value={form.deliveryNotes} onChange={e => update('deliveryNotes', e.target.value)} />
-                </FormField>
-              </div>
-            </div>
-            <label className="mt-4 flex cursor-pointer items-center gap-2.5 text-sm text-white/80">
-              <input type="checkbox" className="h-4 w-4 accent-[#F5B2E2]" checked={form.callBeforeDelivery}
-                onChange={e => update('callBeforeDelivery', e.target.checked)} />
-              Зателефонувати перед доставкою
-            </label>
+            <RecipientAddressSection
+              recipientIsCustomer={form.recipientIsCustomer}
+              onRecipientIsCustomerChange={val => update('recipientIsCustomer', val)}
+              recipientName={form.recipientName}
+              onRecipientNameChange={val => update('recipientName', val)}
+              recipientPhone={form.recipientPhone}
+              onRecipientPhoneChange={val => update('recipientPhone', val)}
+              city={SERVICE_CITY}
+              street={form.street}
+              onStreetChange={val => update('street', val)}
+              building={form.building}
+              onBuildingChange={val => update('building', val)}
+              apartment={form.apartment}
+              onApartmentChange={val => update('apartment', val)}
+              deliveryNotes={form.deliveryNotes}
+              onDeliveryNotesChange={val => update('deliveryNotes', val)}
+              callBeforeDelivery={form.callBeforeDelivery}
+              onCallBeforeDeliveryChange={val => update('callBeforeDelivery', val)}
+              contactName={form.contactName}
+              contactPhone={form.contactPhone}
+              errors={{
+                recipientName: errors.recipientName,
+                recipientPhone: errors.recipientPhone,
+                street: errors.street,
+                building: errors.building,
+                apartment: errors.apartment,
+                deliveryNotes: errors.deliveryNotes,
+              }}
+            />
           </Section>
 
           <Section step={3} title="Дата й час доставки">
