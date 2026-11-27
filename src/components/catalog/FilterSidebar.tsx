@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ChevronDown, ChevronUp, X } from 'lucide-react';
 import type { FilterState, CatalogFacetItem } from '../../types/catalog';
 import { DEFAULT_FACETS } from '../../services/api';
+import { ColourPicker } from './ColourPicker';
 
 interface FilterSidebarProps {
   filters: FilterState;
@@ -12,18 +13,6 @@ interface FilterSidebarProps {
   facets?: CatalogFacetItem[];
   className?: string;
 }
-
-const COLOR_HEX_MAP: Record<string, { hex: string; border?: boolean }> = {
-  white: { hex: '#FFFFFF', border: true },
-  pastel: { hex: '#FAD2E1' },
-  pink: { hex: '#FF69B4' },
-  red: { hex: '#E63946' },
-  orange: { hex: '#FF9500' },
-  yellow: { hex: '#FFCC00' },
-  green: { hex: '#34C759' },
-  blue: { hex: '#007AFF' },
-  purple: { hex: '#AF52DE' },
-};
 
 export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   filters,
@@ -251,33 +240,25 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
           onClick={() => toggleSection('colour')}
           className="w-full flex items-center justify-between font-bold text-[14px] uppercase tracking-wider select-none"
         >
-          <span>Колір</span>
+          <span className="flex items-center gap-1.5">
+            Колір
+            {filters.colors.length > 0 && (
+              <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[#1E0B1A] px-1 text-[10px] font-bold text-[#F5B2E2]">
+                {filters.colors.length}
+              </span>
+            )}
+          </span>
           {openSections.colour ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </button>
 
         {openSections.colour && (
-          <div className="mt-3 flex flex-wrap gap-2.5 items-center">
-            {colors.map(col => {
-              const isSelected = filters.colors.includes(col.slug);
-              const colorConfig = COLOR_HEX_MAP[col.slug] || { hex: '#D1D5DB' };
-              return (
-                <button
-                  key={col.id}
-                  type="button"
-                  onClick={() => toggleColor(col.slug)}
-                  style={{ backgroundColor: colorConfig.hex }}
-                  className={`w-7 h-7 rounded-full transition-all flex items-center justify-center ${
-                    colorConfig.border ? 'border border-[#1E0B1A]/30' : ''
-                  } ${
-                    isSelected
-                      ? 'ring-2 ring-[#1E0B1A] ring-offset-2 ring-offset-[#F5B2E2] scale-110 shadow-sm'
-                      : 'hover:scale-105 opacity-90 hover:opacity-100'
-                  }`}
-                  aria-label={col.name}
-                  title={col.name}
-                />
-              );
-            })}
+          <div className="mt-3">
+            <ColourPicker
+              colors={colors}
+              selectedColors={filters.colors}
+              onToggleColor={toggleColor}
+              onClearColors={() => onChangeFilters({ ...filters, colors: [] })}
+            />
           </div>
         )}
       </div>
