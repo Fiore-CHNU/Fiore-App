@@ -7,17 +7,18 @@ const escapeHtml = (value: string): string =>
     "'": '&#39;',
   })[char] ?? char);
 
-/** Picks a comfortable font size so both short notes and 250-char wishes fit inside 15×10 cm. */
+/** Scales typography by message length so the 15×10 cm card feels balanced without empty space. */
 const pickMessageFontSizePt = (text: string): number => {
   const len = text.trim().length;
-  if (len <= 60) return 15;
-  if (len <= 130) return 13;
-  if (len <= 200) return 11.5;
-  return 10.5;
+  if (len <= 35) return 26;
+  if (len <= 85) return 21;
+  if (len <= 155) return 17;
+  if (len <= 210) return 15;
+  return 13.5;
 };
 
 /**
- * Builds standalone HTML for a 15×10 cm (150mm × 100mm) Fiore greeting card.
+ * Builds standalone HTML for an A6 landscape (148mm × 105mm / ~15×10 cm) Fiore greeting card.
  * Intentionally omits order numbers, prices, and customer contacts so the card is gift-ready.
  */
 export const buildGreetingCardHtml = (orderNumber: string, rawMessage: string): string => {
@@ -34,7 +35,7 @@ export const buildGreetingCardHtml = (orderNumber: string, rawMessage: string): 
   <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet" />
   <style>
     @page {
-      size: 150mm 100mm;
+      size: A6 landscape;
       margin: 0;
     }
 
@@ -89,12 +90,12 @@ export const buildGreetingCardHtml = (orderNumber: string, rawMessage: string): 
 
     .card {
       position: relative;
-      width: 150mm;
-      height: 100mm;
-      max-width: 150mm;
-      max-height: 100mm;
-      padding: 7mm;
-      background: linear-gradient(145deg, #fffdfb 0%, #fdf6fa 100%);
+      width: 148mm;
+      height: 105mm;
+      max-width: 148mm;
+      max-height: 105mm;
+      padding: 5mm;
+      background: radial-gradient(circle at 50% 48%, #ffffff 0%, #fdf5fa 75%, #f9ebf4 100%);
       border: 0.35mm dashed #d5b4c8;
       box-shadow: 0 12px 32px rgba(38, 14, 33, 0.12);
       overflow: hidden;
@@ -104,7 +105,7 @@ export const buildGreetingCardHtml = (orderNumber: string, rawMessage: string): 
     .frame-outer {
       position: relative;
       flex: 1;
-      border: 0.45mm solid #6c335e;
+      border: 0.5mm solid #6c335e;
       padding: 2mm;
       display: flex;
     }
@@ -112,8 +113,8 @@ export const buildGreetingCardHtml = (orderNumber: string, rawMessage: string): 
     .frame-inner {
       position: relative;
       flex: 1;
-      border: 0.2mm solid #d8a9c7;
-      padding: 5mm 9mm;
+      border: 0.25mm solid #d8a9c7;
+      padding: 5.5mm 10mm;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -123,35 +124,35 @@ export const buildGreetingCardHtml = (orderNumber: string, rawMessage: string): 
 
     .corner {
       position: absolute;
-      width: 16px;
-      height: 16px;
+      width: 24px;
+      height: 24px;
       color: #9e5c8a;
       pointer-events: none;
     }
-    .corner.tl { top: 4px; left: 4px; }
-    .corner.tr { top: 4px; right: 4px; transform: scaleX(-1); }
-    .corner.bl { bottom: 4px; left: 4px; transform: scaleY(-1); }
-    .corner.br { bottom: 4px; right: 4px; transform: scale(-1); }
+    .corner.tl { top: 5px; left: 5px; }
+    .corner.tr { top: 5px; right: 5px; transform: scaleX(-1); }
+    .corner.bl { bottom: 5px; left: 5px; transform: scaleY(-1); }
+    .corner.br { bottom: 5px; right: 5px; transform: scale(-1); }
 
     .header {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 3px;
+      gap: 4px;
     }
 
     .brand-tag {
-      font-size: 7.5pt;
+      font-size: 10pt;
       letter-spacing: 0.28em;
       text-transform: uppercase;
-      color: #7d3e6d;
-      font-weight: 500;
+      color: #6c335e;
+      font-weight: 600;
     }
 
     .divider {
-      width: 24mm;
-      height: 0.25mm;
-      background: linear-gradient(90deg, transparent, #b87ca4, transparent);
+      width: 38mm;
+      height: 0.3mm;
+      background: linear-gradient(90deg, transparent, #a86493, transparent);
       margin-top: 2px;
     }
 
@@ -169,11 +170,11 @@ export const buildGreetingCardHtml = (orderNumber: string, rawMessage: string): 
       margin: 0;
       font-size: ${fontSizePt}pt;
       font-style: italic;
-      line-height: 1.5;
+      line-height: 1.42;
       color: #2b1025;
       white-space: pre-wrap;
       overflow-wrap: anywhere;
-      max-width: 112mm;
+      max-width: 118mm;
     }
 
     .footer {
@@ -185,22 +186,22 @@ export const buildGreetingCardHtml = (orderNumber: string, rawMessage: string): 
 
     .signature {
       font-family: 'Great Vibes', Georgia, cursive;
-      font-size: 16pt;
-      line-height: 1.1;
+      font-size: 24pt;
+      line-height: 1.05;
       color: #4e1e45;
     }
 
     .sub {
-      font-size: 6.5pt;
+      font-size: 8pt;
       letter-spacing: 0.22em;
       text-transform: uppercase;
-      color: #9e5c8a;
+      color: #8b4c77;
     }
 
     @media print {
       html, body {
-        width: 150mm;
-        height: 100mm;
+        width: 148mm;
+        height: 105mm;
         background: #ffffff;
         padding: 0;
         display: block;
@@ -222,7 +223,7 @@ export const buildGreetingCardHtml = (orderNumber: string, rawMessage: string): 
 </head>
 <body>
   <div class="toolbar">
-    <span>Формат листівки: <strong>15 × 10 см</strong> (конверт A6)</span>
+    <span>Формат листівки: <strong>15 × 10 см</strong> (A6)</span>
     <button type="button" onclick="window.print()">Друкувати</button>
     <button type="button" class="secondary" onclick="window.close()">Закрити</button>
   </div>
@@ -231,24 +232,24 @@ export const buildGreetingCardHtml = (orderNumber: string, rawMessage: string): 
     <div class="frame-outer">
       <div class="frame-inner">
         <svg class="corner tl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
-          <path d="M2 14V4a2 2 0 0 1 2-2h10" />
-          <circle cx="5.5" cy="5.5" r="1.2" fill="currentColor" />
+          <path d="M2 15V4a2 2 0 0 1 2-2h11" />
+          <circle cx="5.5" cy="5.5" r="1.3" fill="currentColor" />
         </svg>
         <svg class="corner tr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
-          <path d="M2 14V4a2 2 0 0 1 2-2h10" />
-          <circle cx="5.5" cy="5.5" r="1.2" fill="currentColor" />
+          <path d="M2 15V4a2 2 0 0 1 2-2h11" />
+          <circle cx="5.5" cy="5.5" r="1.3" fill="currentColor" />
         </svg>
         <svg class="corner bl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
-          <path d="M2 14V4a2 2 0 0 1 2-2h10" />
-          <circle cx="5.5" cy="5.5" r="1.2" fill="currentColor" />
+          <path d="M2 15V4a2 2 0 0 1 2-2h11" />
+          <circle cx="5.5" cy="5.5" r="1.3" fill="currentColor" />
         </svg>
         <svg class="corner br" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
-          <path d="M2 14V4a2 2 0 0 1 2-2h10" />
-          <circle cx="5.5" cy="5.5" r="1.2" fill="currentColor" />
+          <path d="M2 15V4a2 2 0 0 1 2-2h11" />
+          <circle cx="5.5" cy="5.5" r="1.3" fill="currentColor" />
         </svg>
 
         <header class="header">
-          <svg width="24" height="24" viewBox="0 0 100 100" fill="none" aria-hidden="true">
+          <svg width="34" height="34" viewBox="0 0 100 100" fill="none" aria-hidden="true">
             <path d="M 48 46 C 42 22 18 16 10 32 C 4 44 22 58 48 50 Z" fill="#8b4277" opacity="0.9"/>
             <path d="M 47 52 C 40 60 22 66 18 78 C 14 90 32 94 48 64 Z" fill="#c478ac" opacity="0.85"/>
             <path d="M 52 46 C 58 22 82 16 90 32 C 96 44 78 58 52 50 Z" fill="#8b4277" opacity="0.9"/>
@@ -265,6 +266,7 @@ export const buildGreetingCardHtml = (orderNumber: string, rawMessage: string): 
         </div>
 
         <footer class="footer">
+          <div class="divider" style="margin-bottom: 3px;"></div>
           <span class="signature">Fiore</span>
           <span class="sub">З теплом та ніжністю</span>
         </footer>
