@@ -52,6 +52,7 @@ npm run lint
 | **EAN-336** | **US-1.1.2** Frontend: Сітка карток каталогу, адаптивна верстка | `main` |  **Done** |
 | **EAN-341** | **US-1.4.2** Frontend: Рядок швидкого пошуку у шапці з підказками | `main` |  **Done** |
 | **EAN-346** | **US-1.5.2** Frontend: Перемикач сортування (за ціною та новизною) | `main` |  **Done** |
+| **EAN-505 / EAN-517** | Frontend: Компонент Colour Picker (вибір кольорів, контрастні галочки, лічильник, скидання) | `feature/EAN-517-colour-picker` | ✅ **Done** |
 | **EAN-465** | **NFR-03.2** Frontend: Ліниве завантаження фото (IntersectionObserver) | `main` |  **Done** |
 | **EAN-363** | **US-3.1.2** Frontend: Кнопка «Додати в кошик», лічильник | `main` |  **Done** |
 | **EAN-350 / EAN-352** | **US-2.1.2** Frontend: Галерея: свайп, повний екран (Lightbox), стрілки, брендована заглушка | `feature/EAN-352-gallery-swipe-fullscreen` | ✅ **Done** |
@@ -61,6 +62,7 @@ npm run lint
 | **EAN-382 / EAN-384** | **US-4.3.2** Frontend: Вибір дати та слоту доставки (швидкі дні, календар, статус місткості, буфер 90 хв) | `feature/EAN-384-delivery-slots` | ✅ **Done** |
 | **EAN-387 / EAN-389** | **US-4.4.2** Frontend: Блок листівки з лічильником (250 символів, швидкі шаблони, попередній перегляд) | `feature/EAN-389-greeting-card` | ✅ **Done** |
 | **EAN-392 / EAN-394** | **US-4.5.2** Frontend: Повідомлення про зміни в кошику (зміна цін, недоступність, залишки, мінімальна сума) | `feature/EAN-394-cart-changes-notification` | ✅ **Done** |
+| **EAN-409 / EAN-411** | **US-6.2.2** Frontend: Сторінка статусу замовлення (інтерактивний таймлайн, автооновлення 20с, копіювання посилання) | `feature/EAN-411-order-status-page` | ✅ **Done** |
 | **EAN-426 / EAN-428** | **US-7.1.2** Frontend: Сторінка входу до адмін-панелі, вихід, захист ролей | `feature/EAN-428-admin-login` |  **Done** |
 | **EAN-428 / 434 / 439 / 444 / 449 / 455 / 422** | **US-7.1, 9.1–9.4, 10.1, 8.3** Frontend: Вхід через JWT, черга замовлень (30 с, звук), картка, статуси, кур’єр, друк листівки, наявність в 1 клік | `feature/admin-backoffice` | ✅ **Done** |
 | **EAN-368** | **US-3.2.2** Frontend: Кошик через API (`X-Cart-Token`), доставка, мінімальна сума | `feature/checkout-flow` | ✅ **Done** |
