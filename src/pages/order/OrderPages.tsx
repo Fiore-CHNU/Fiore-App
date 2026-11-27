@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { CheckCircle2, Clock, Copy, CreditCard, Loader2, PackageSearch, ShieldCheck, TimerOff } from 'lucide-react';
-import { ApiError, formatDateTime, formatSlot, formatUah } from '../../services/http';
+import { ApiError, formatSlot, formatUah } from '../../services/http';
 import { orderApi, orderSessionStore } from '../../services/orderApi';
 import { useCart } from '../../hooks/useCart';
-import { ORDER_STATUS_LABELS, type OrderDetails, type OrderStatus, type TrackedOrder } from '../../types/order';
+import type { OrderDetails } from '../../types/order';
 
 /** Payment window from US-5.2 (BR-9); the server is the source of truth, this only drives the countdown. */
 const PAYMENT_WINDOW_MS = 15 * 60 * 1000;
@@ -252,96 +252,6 @@ export const PaymentExpiredPage: React.FC = () => {
   );
 };
 
-/* ---------- Public status page by tracking code (US-6.2) ---------- */
+/* ---------- Public status page by tracking code (US-6.2 / EAN-411) ---------- */
 
-const PROGRESS: OrderStatus[] = ['paid', 'assembling', 'outForDelivery', 'delivered'];
-
-const progressIndex = (status: OrderStatus): number => {
-  switch (status) {
-    case 'paid':
-    case 'accepted':
-      return 0;
-    case 'assembling':
-    case 'readyForDelivery':
-      return 1;
-    case 'outForDelivery':
-      return 2;
-    case 'delivered':
-      return 3;
-    default:
-      return -1;
-  }
-};
-
-export const TrackOrderPage: React.FC = () => {
-  const { trackingCode } = useParams();
-  const [order, setOrder] = useState<TrackedOrder | null>(null);
-  const [state, setState] = useState<'loading' | 'ready' | 'missing' | 'error'>('loading');
-
-  const load = useCallback(async () => {
-    if (!trackingCode) {
-      setState('missing');
-      return;
-    }
-    try {
-      setOrder(await orderApi.track(trackingCode));
-      setState('ready');
-    } catch (error) {
-      setState(error instanceof ApiError && error.status === 404 ? 'missing' : 'error');
-    }
-  }, [trackingCode]);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  if (state === 'loading') return <Spinner />;
-  if (state === 'missing') return <NotFound />;
-  if (state === 'error' || !order) {
-    return (
-      <PageCard>
-        <p className="mb-4 text-sm text-red-300">Не вдалося завантажити статус. Спробуйте пізніше.</p>
-        <button onClick={() => void load()} className="rounded-full bg-[#F5B2E2] px-5 py-2 text-sm font-semibold text-[#1E0B1A]">Оновити</button>
-      </PageCard>
-    );
-  }
-
-  const current = progressIndex(order.status);
-
-  return (
-    <PageCard>
-      <p className="mb-1 text-xs uppercase tracking-widest text-[#F5B2E2]/80">Замовлення {order.orderNumber}</p>
-      <h1 className="mb-6 font-serif text-2xl sm:text-3xl">{ORDER_STATUS_LABELS[order.status]}</h1>
-
-      {current >= 0 && (
-        <ol className="mb-8 grid grid-cols-4 gap-2" aria-label="Етапи замовлення">
-          {PROGRESS.map((status, index) => (
-            <li key={status} className="flex flex-col items-center gap-2 text-center">
-              <span className={`h-2 w-full rounded-full ${index <= current ? 'bg-[#F5B2E2]' : 'bg-[#431A3B]'}`} />
-              <span className={`text-[11px] sm:text-xs ${index <= current ? 'text-white' : 'text-white/40'}`}>{ORDER_STATUS_LABELS[status]}</span>
-            </li>
-          ))}
-        </ol>
-      )}
-
-      <dl className="mb-6 space-y-1.5 text-sm">
-        <div className="flex justify-between gap-4 text-white/70"><dt>Доставка</dt><dd className="text-right text-white">{formatSlot(order.scheduledFrom, order.scheduledTo)}</dd></div>
-        <div className="flex justify-between gap-4 text-white/70"><dt>Сума</dt><dd className="text-white">{formatUah(order.totalAmount)}</dd></div>
-      </dl>
-      <ItemsList items={order.items} />
-
-      <h2 className="mb-3 mt-8 font-serif text-lg">Історія</h2>
-      <ul className="space-y-2 text-sm">
-        {order.statusHistory.map((entry, index) => (
-          <li key={`${entry.status}-${index}`} className="flex justify-between gap-4">
-            <span>{ORDER_STATUS_LABELS[entry.status]}</span>
-            <span className="text-white/50">{formatDateTime(entry.changedAt)}</span>
-          </li>
-        ))}
-      </ul>
-      <p className="mt-8 text-xs text-white/45">
-        Питання щодо замовлення? Телефонуйте: <a className="text-[#F5B2E2]" href={`tel:${STORE_PHONE.replace(/\s/g, '')}`}>{STORE_PHONE}</a>
-      </p>
-    </PageCard>
-  );
-};
+export { TrackOrderPage } from './TrackOrderPage';
